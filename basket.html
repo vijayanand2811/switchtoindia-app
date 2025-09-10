@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Basket — Switch To India</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="logo"><div class="badge"></div><h1>Switch To India</h1></div>
+  <nav><a href="index.html">Home</a><a href="blog.html">Blog</a><a href="basket.html">Basket</a></nav>
+</header>
+<main>
+  <h2>Your Basket</h2>
+  <div id="basketItems" class="card"></div>
+  <div class="card"><h4>Impact Summary</h4><canvas id="pieChart"></canvas><div id="impactText" class="small"></div></div>
+</main>
+</div>
+<script src="app.js"></script>
+<script>loadBasket();</script>
+</body>
+</html>

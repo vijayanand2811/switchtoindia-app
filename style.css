@@ -1,0 +1,10 @@
+body{font-family:Arial,sans-serif;margin:0;padding:0;background:#fafafa;color:#111;}
+.wrap{max-width:840px;margin:0 auto;padding:20px;}
+header{display:flex;justify-content:space-between;align-items:center;}
+nav a{margin-left:10px;color:#333;text-decoration:none;}
+.card{background:#fff;padding:14px;border-radius:10px;margin:10px 0;}
+.btn{padding:8px 14px;border:none;border-radius:8px;cursor:pointer;}
+.btn-primary{background:#ff7a00;color:#fff;}
+.btn-ghost{background:#eee;color:#333;}
+.search-input{padding:8px;border:1px solid #ccc;border-radius:8px;flex:1;}
+.small{font-size:13px;color:#666;}
