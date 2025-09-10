@@ -11,7 +11,7 @@
     <header>
       <div class="logo">
         <div class="badge" aria-hidden>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
             <path d="M3 3h2l1 7h13l1-5H8" stroke="#111" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
             <circle cx="10" cy="20" r="1.6" fill="#111"/>
             <circle cx="18" cy="20" r="1.6" fill="#111"/>
@@ -25,6 +25,19 @@
         <a href="basket.html">Basket</a>
       </nav>
     </header>
+
+    <!-- HERO (same as index) -->
+    <section class="hero" role="banner" aria-label="Hero">
+      <h2>Discover who owns the brands you buy — and switch to Indian alternatives.</h2>
+      <p>Type a product, scan a barcode later, and see instant Indian alternatives. Minimal. Fast. Neutral.</p>
+
+      <div class="search" style="margin-top:8px">
+        <input id="searchBoxHero" placeholder="Type a product (e.g., noodles, soap)" aria-label="Search product">
+        <button class="btn btn-primary" onclick="doSearchFromHero()">Search</button>
+        <button class="btn btn-ghost" onclick="openExample()">Try Example</button>
+      </div>
+    </section>
+
     <main>
       <section style="margin-top:10px;">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -33,21 +46,26 @@
           <a class="btn btn-ghost" href="index.html">Back</a>
         </div>
       </section>
+
       <section id="resultsArea" style="margin-top:18px">
         <div id="resultsList"></div>
         <div id="noResults" class="small" style="display:none;margin-top:12px">No results found.</div>
       </section>
     </main>
+
     <footer>
-      <div class="small">All brand names and logos belong to their respective owners.</div>
+      <div class="small">All brand names and logos belong to their respective owners. Information is provided for consumer awareness only.</div>
     </footer>
   </div>
+
 <script src="app.js"></script>
 <script>
 function getQueryParam(name){ return new URL(window.location.href).searchParams.get(name); }
 const initial = getQueryParam('q')||'';
-if(initial){ document.getElementById('searchBox').value=initial; doSearchResults(); }
+if(initial){ document.getElementById('searchBox').value=initial; document.getElementById('searchBoxHero').value=initial; doSearchResults(); }
 function doSearchResults(){ const q=document.getElementById('searchBox').value.trim(); if(!q){alert('Type product');return;} searchAndShow(q); }
+function doSearchFromHero(){ const q=document.getElementById('searchBoxHero').value.trim(); if(!q){alert('Type product');return;} window.location.href = 'results.html?q=' + encodeURIComponent(q); }
+function openExample(){ window.location.href='results.html?q=maggi'; }
 </script>
 </body>
 </html>

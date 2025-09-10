@@ -9,17 +9,62 @@
 <body>
 <div class="wrap">
 <header>
-  <div class="logo"><div class="badge"></div><h1>Switch To India</h1></div>
-  <nav><a href="index.html">Home</a><a href="blog.html">Blog</a><a href="basket.html">Basket</a></nav>
+  <div class="logo">
+    <div class="badge" aria-hidden>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <path d="M3 3h2l1 7h13l1-5H8" stroke="#111" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="10" cy="20" r="1.6" fill="#111"/>
+        <circle cx="18" cy="20" r="1.6" fill="#111"/>
+      </svg>
+    </div>
+    <h1>Switch To India</h1>
+  </div>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="blog.html">Blog</a>
+    <a href="basket.html">Basket</a>
+  </nav>
 </header>
+
+<!-- HERO (same as index) -->
+<section class="hero" role="banner" aria-label="Hero">
+  <h2>Discover who owns the brands you buy — and switch to Indian alternatives.</h2>
+  <p>Type a product, scan a barcode later, and see instant Indian alternatives. Minimal. Fast. Neutral.</p>
+
+  <div class="search" style="margin-top:8px">
+    <input id="searchBoxHero" placeholder="Type a product (e.g., noodles, soap)" aria-label="Search product">
+    <button class="btn btn-primary" onclick="doSearchFromHero()">Search</button>
+    <button class="btn btn-ghost" onclick="openExample()">Try Example</button>
+  </div>
+</section>
+
 <main>
-  <h2>Top 10 Indian Alternatives</h2>
-  <ol>
-    <li>Instant Noodles: Maggi → Yippee</li>
-    <li>Toothpaste: Colgate → Dabur, Patanjali</li>
-    <li>Shampoo: Head & Shoulders → Himalaya</li>
-  </ol>
+  <section style="margin-top:10px">
+    <h2 class="no-margin">Top 10 Indian Alternatives to Everyday Products</h2>
+    <ol>
+      <li><strong>Instant Noodles</strong>: Maggi (Nestlé — Switzerland) → <em>ITC Sunfeast Yippee!</em> (India)</li>
+      <li><strong>Toothpaste</strong>: Colgate (Colgate-Palmolive — USA) → <em>Dabur Red</em> / <em>Patanjali</em> (India)</li>
+      <li><strong>Shampoo</strong>: Head & Shoulders (P&G — USA) → <em>Clinic Plus</em> / <em>Himalaya</em> (India)</li>
+      <li><strong>Cold Drinks</strong>: Coca-Cola (USA) → <em>Thums Up</em> (India)</li>
+      <li><strong>Soap</strong>: Dove (Unilever) → <em>Santoor</em> / <em>Medimix</em> (India)</li>
+      <li><strong>Tea</strong>: Lipton (Unilever) → <em>Tata Tea</em> / <em>Wagh Bakri</em> (India)</li>
+      <li><strong>Biscuits</strong>: Oreo (Mondelez) → <em>Parle</em> / <em>Britannia</em> (India)</li>
+      <li><strong>Cooking Oil</strong>: Fortune → <em>Dhara</em> / <em>Sundrop</em> (India)</li>
+      <li><strong>Detergent</strong>: Tide (P&G) → <em>Nirma</em> / <em>Ghadi</em> (India)</li>
+      <li><strong>Ice Cream</strong>: Kwality Wall's (Unilever) → <em>Amul</em> / <em>Mother Dairy</em> (India)</li>
+    </ol>
+    <p class="small">Short bullets — update as you verify more brands.</p>
+  </section>
 </main>
+
+<footer>
+  <div class="small">All brand names and logos belong to their respective owners. Switch To India provides information for consumer awareness only.</div>
+</footer>
 </div>
+
+<script>
+function doSearchFromHero(){ const q=document.getElementById('searchBoxHero').value.trim(); if(!q){alert('Type product');return;} window.location.href='results.html?q='+encodeURIComponent(q); }
+function openExample(){ window.location.href='results.html?q=maggi'; }
+</script>
 </body>
 </html>
