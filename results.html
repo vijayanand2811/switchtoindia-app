@@ -60,12 +60,37 @@
 
 <script src="app.js"></script>
 <script>
+// Read ?q= from URL and auto-run search if present
 function getQueryParam(name){ return new URL(window.location.href).searchParams.get(name); }
-const initial = getQueryParam('q')||'';
-if(initial){ document.getElementById('searchBox').value=initial; document.getElementById('searchBoxHero').value=initial; doSearchResults(); }
-function doSearchResults(){ const q=document.getElementById('searchBox').value.trim(); if(!q){alert('Type product');return;} searchAndShow(q); }
-function doSearchFromHero(){ const q=document.getElementById('searchBoxHero').value.trim(); if(!q){alert('Type product');return;} window.location.href = 'results.html?q=' + encodeURIComponent(q); }
-function openExample(){ window.location.href='results.html?q=maggi'; }
+
+const initial = getQueryParam('q') || '';
+if (initial) {
+  // put the query into both hero/search inputs if present
+  const sb = document.getElementById('searchBox');
+  const sbHero = document.getElementById('searchBoxHero');
+  if (sb) sb.value = initial;
+  if (sbHero) sbHero.value = initial;
+  // call the main search function from app.js
+  searchAndShow(initial);
+}
+
+// Called by the small inline Search button on this page
+function doSearchResults(){
+  const q = (document.getElementById('searchBox') || {}).value || '';
+  if (!q.trim()) { alert('Type a product name to search.'); return; }
+  searchAndShow(q.trim());
+}
+
+// Called by the hero search input (if present on this page)
+function doSearchFromHero(){
+  const q = (document.getElementById('searchBoxHero') || {}).value || '';
+  if (!q.trim()) { alert('Type a product name to search.'); return; }
+  // navigate to results page with query param (keeps behaviour consistent)
+  window.location.href = 'results.html?q=' + encodeURIComponent(q.trim());
+}
+
+// small helper for example button
+function openExample(){ window.location.href = 'results.html?q=maggi'; }
 </script>
 </body>
 </html>
