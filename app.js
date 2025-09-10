@@ -5,11 +5,12 @@ const TABLE_NAME = "Products";
 let _productsCache = null;
 
 async function fetchProductsOnce(){
-  if(_productsCache) return _productsCache;
-  const url = `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(TABLE_NAME)}?pageSize=100`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` } });
+  if (_productsCache) return _productsCache;
+  const endpoint = '/.netlify/functions/getProducts'; // Netlify function path
+  const res = await fetch(endpoint); // optional: + '?q=maggi'
+  if (!res.ok) throw new Error('Failed to fetch from function: ' + res.status);
   const json = await res.json();
-  _productsCache = (json.records || []).map(r => r.fields || {});
+  _productsCache = (json.records || []);
   return _productsCache;
 }
 
