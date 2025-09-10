@@ -53,12 +53,23 @@ async function searchAndShow(q) {
     const all = await fetchProductsOnce();
     const ql = (q || '').toString().toLowerCase().trim();
 
-    // Normalize: our function returns objects (if using netlify) already as fields
-    // If records are in { ProductName: ..., ParentCompany: ... } use them directly.
+    // Match product name, brand, and alternatives
     const results = all.filter(p => {
-      const name = (p.ProductName || p.ProductID || '').toString().toLowerCase();
-      const brand = (p.Brand || '').toString().toLowerCase();
-      return !ql || name.includes(ql) || brand.includes(ql);
+      const item = p.fields ? p.fields : p; // normalize shapes
+      const name = (item.ProductName || item.ProductID || '').toString().toLowerCase();
+      const brand = (item.Brand || '').toString().toLowerCase();
+      const alt1 = (item.Alternative1 || '').toString().toLowerCase();
+      const alt2 = (item.Alternative2 || '').toString().toLowerCase();
+      const alt3 = (item.Alternative3 || '').toString().toLowerCase();
+
+      // If query is empty, show all (or you can return [] to require a query)
+      if (!ql) return true;
+
+      return name.includes(ql)
+        || brand.includes(ql)
+        || alt1.includes(ql)
+        || alt2.includes(ql)
+        || alt3.includes(ql);
     });
 
     renderResults(results);
@@ -67,7 +78,6 @@ async function searchAndShow(q) {
     console.error(err);
   }
 }
-
 function renderResults(results) {
   const container = document.getElementById('resultsList');
   const no = document.getElementById('noResults');
@@ -81,8 +91,6 @@ function renderResults(results) {
   }
 
   results.forEach(p => {
-    // Support both shapes: p may already be plain fields (if Netlify fn returned records),
-    // or p.fields if you used the old records shape. Normalize:
     const item = p.fields ? p.fields : p;
 
     const name = item.ProductName || item.ProductID || 'Unnamed product';
@@ -90,15 +98,28 @@ function renderResults(results) {
     const parent = item.ParentCompany || 'Unknown';
     const country = item.ParentCountry || 'Unknown';
 
-    // Alternatives - collect those that are non-empty
+    // Alternatives array
     const alts = [];
     if (item.Alternative1) alts.push(item.Alternative1);
     if (item.Alternative2) alts.push(item.Alternative2);
     if (item.Alternative3) alts.push(item.Alternative3);
 
-    const altHtml = alts.length
-      ? `<div style="margin-top:8px"><strong>Alternatives:</strong> ${alts.map(a => escapeHtml(a)).join(', ')}</div>`
-      : `<div style="margin-top:8px;color:#666">No alternatives listed</div>`;
+    // Build alternatives HTML — each alternative has a "Switch/Add" button
+    let altHtml = '';
+    if (alts.length) {
+      altHtml = '<div style="margin-top:8px"><strong>Alternatives:</strong><div style="margin-top:6px">';
+      alts.forEach((a, idx) => {
+        const safeA = escapeJS(a);
+        // We assume alternative is Indian. If you have alternative country field, use that instead.
+        altHtml += `<div style="margin-top:6px">
+                      <span>${escapeHtml(a)}</span>
+                      <button class="btn btn-ghost" style="margin-left:8px;padding:6px 10px;border-radius:8px" onclick="addAlternativeToBasket('${safeA}')">Switch / Add</button>
+                    </div>`;
+      });
+      altHtml += '</div></div>';
+    } else {
+      altHtml = `<div style="margin-top:8px;color:#666">No alternatives listed</div>`;
+    }
 
     const isIndian = (country || '').toString().toLowerCase().includes('india');
     const badge = isIndian ? '<span class="flag-badge">Indian</span>' : '<span class="flag-badge">Foreign</span>';
@@ -124,7 +145,6 @@ function renderResults(results) {
     container.insertAdjacentHTML('beforeend', html);
   });
 }
-
 /* -------------------------
    Basket helpers
    ------------------------- */
@@ -153,6 +173,13 @@ function loadBasket() {
   }
   basketItemsDiv.innerHTML = basket.map(i => `<div style="padding:6px 0"><strong>${escapeHtml(i.name)}</strong> <span class="small">(${escapeHtml(i.country||'')})</span></div>`).join('');
   renderImpact(basket);
+}
+
+// Add an alternative (assume Indian ownership) to basket
+function addAlternativeToBasket(altName) {
+  // country set to "India" for alternatives — change if your Airtable has explicit alt country
+  addToBasket(altName, 'India');
+  showToast(`${altName} added to basket (Indian alternative)`);
 }
 
 /* -------------------------
