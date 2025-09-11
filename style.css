@@ -104,6 +104,77 @@ nav a { color:var(--muted); text-decoration:none; margin-left:14px; font-size:14
 .alt-item .alt-action { flex:0 0 auto; }
 .alt-item .alt-action button { min-width:110px; padding:8px 12px; border-radius:8px; font-size:14px; }
 
+/* ---------- Minimal fixes to enable colored badges + closer buttons ---------- */
+
+/* Ensure Indian / Foreign badge color classes render visibly */
+.flag-badge.indian {
+  background: #138808 !important;  /* green */
+  color: #fff !important;
+  border: 0 !important;
+}
+.flag-badge.foreign {
+  background: #d9534f !important;  /* red */
+  color: #fff !important;
+  border: 0 !important;
+}
+
+/* Style for the "Alternatives:" heading (already injected by JS) */
+.alt-list > div:first-child {
+  margin-bottom: 8px;
+  font-weight: 700;
+  color: #333;
+  font-size: 14px;
+}
+
+/* Make each alternative row keep text and button close together.
+   Previously the button was pushed to the far-right with space-between.
+   Using flex-start keeps the button next to the name; the small margin-left
+   on .alt-action keeps a tidy gap. */
+.alt-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* keep button next to the name */
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: #ffffff;
+  border: 1px solid #efecec;
+  box-shadow: 0 4px 10px rgba(10,10,10,0.02);
+}
+
+.alt-item .alt-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111;
+}
+
+/* Push the action slightly right while keeping it visually connected */
+.alt-item .alt-action {
+  margin-left: 10px; /* small gap separating name and button */
+  flex: 0 0 auto;
+}
+
+/* Keep a consistent button size */
+.alt-item .alt-action button {
+  min-width: 110px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* Ensure main product badge and Add button spacing */
+.result-left h3 { margin: 0; }
+.result-left .flag-badge { margin-left: 8px; vertical-align: middle; }
+.result-left .btn-ghost.small-btn { margin-left: 10px; height: 34px; align-self: center; }
+
+/* Mobile fallback: stack alternative items on small screens */
+@media (max-width: 640px) {
+  .alt-item { flex-direction: column; align-items: stretch; gap: 8px; }
+  .alt-item .alt-action { margin-left: 0; display:flex; justify-content:flex-end; }
+  .alt-item .alt-action button { width:100%; min-width: unset; }
+}
+
 /* Footer */
 .footer { margin:30px 0; padding:18px 0; border-top:1px solid #f0eee9; color:var(--muted); font-size:13px; }
 
