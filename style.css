@@ -61,3 +61,27 @@ nav a{color:var(--muted);text-decoration:none;margin-left:14px;font-size:14px}
 .result-left h3{margin:0 0 6px 0;font-size:16px}
 .footer{margin:30px 0;padding:18px 0;border-top:1px solid #f0eee9;color:var(--muted);font-size:13px}
 .no-margin{margin:0}
+
+/* Make the small add buttons visually consistent */
+.small-btn { font-size:14px; }
+
+/* Tweak the product row to keep things top-aligned and compact */
+.result-row { display:flex; gap:12px; align-items:flex-start; }
+.result-left { flex:1; }
+
+/* Make sure badge sits nicely next to the title */
+.flag-badge { padding:6px 10px; border-radius:999px; background:#f2f2f2; color:#333; font-weight:600; font-size:13px; }
+
+/* Small thumbnail rules (if you're using images) */
+.product-thumb { width:56px; height:56px; object-fit:cover; border-radius:8px; border:1px solid #eee; }
+
+/* Keep Switch/Add and Add buttons consistent */
+.btn-ghost { background:transparent; border:1px solid #eee; color:#333; }
+.btn-ghost.small-btn { padding:6px 10px; }
+
+/* Responsive: on narrow screens stack header actions */
+@media(max-width:640px) {
+  .result-row { flex-direction:column; }
+  .product-thumb { width:48px; height:48px; }
+}
+
