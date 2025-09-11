@@ -1,16 +1,17 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Results — Switch To India</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Results — Switch To India</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="wrap">
     <header>
       <div class="logo">
         <div class="badge" aria-hidden>
+          <!-- shopping cart badge svg -->
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
             <path d="M3 3h2l1 7h13l1-5H8" stroke="#111" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
             <circle cx="10" cy="20" r="1.6" fill="#111"/>
@@ -19,6 +20,7 @@
         </div>
         <h1>Switch To India</h1>
       </div>
+
       <nav>
         <a href="index.html">Home</a>
         <a href="blog.html">Blog</a>
@@ -26,20 +28,21 @@
       </nav>
     </header>
 
-    <!-- HERO (same as index) -->
+    <!-- HERO (kept as main search CTA) -->
     <section class="hero" role="banner" aria-label="Hero">
       <h2>Discover who owns the brands you buy — and switch to Indian alternatives.</h2>
       <p>Type a product, scan a barcode later, and see instant Indian alternatives. Minimal. Fast. Neutral.</p>
 
-      <div class="search" style="margin-top:8px">
-        <input id="searchBoxHero" placeholder="Type a product (e.g., noodles, soap)" aria-label="Search product">
-        <button class="btn btn-primary" onclick="doSearchFromHero()">Search</button>
-        <button class="btn btn-ghost" onclick="openExample()">Try Example</button>
+      <div class="search" style="margin-top:8px; display:flex; gap:8px; max-width:640px;">
+        <input id="searchBoxHero" placeholder="Type a product (e.g., noodles, soap)" aria-label="Search product" style="flex:1;padding:12px;border-radius:10px;border:1px solid #eee" />
+        <button class="btn btn-primary" onclick="doSearchFromHero()" style="padding:10px 16px;">Search</button>
+        <button class="btn btn-ghost" onclick="openExample()" style="padding:10px 16px;">Try Example</button>
       </div>
     </section>
 
+    <!-- MAIN: results area -->
     <main>
- 
+      <!-- Results card -->
       <section id="resultsArea" style="margin-top:18px">
         <div id="resultsList"></div>
         <div id="noResults" class="small" style="display:none;margin-top:12px">No results found.</div>
@@ -51,39 +54,29 @@
     </footer>
   </div>
 
-<script src="app.js"></script>
-<script>
-// Read ?q= from URL and auto-run search if present
-function getQueryParam(name){ return new URL(window.location.href).searchParams.get(name); }
+  <!-- app logic -->
+  <script src="app.js"></script>
 
-const initial = getQueryParam('q') || '';
-if (initial) {
-  // put the query into both hero/search inputs if present
-  const sb = document.getElementById('searchBox');
-  const sbHero = document.getElementById('searchBoxHero');
-  if (sb) sb.value = initial;
-  if (sbHero) sbHero.value = initial;
-  // call the main search function from app.js
-  searchAndShow(initial);
-}
+  <!-- page glue: auto-run search when ?q= is present, and wire hero -->
+  <script>
+    function getQueryParam(name){ return new URL(window.location.href).searchParams.get(name); }
 
-// Called by the small inline Search button on this page
-function doSearchResults(){
-  const q = (document.getElementById('searchBox') || {}).value || '';
-  if (!q.trim()) { alert('Type a product name to search.'); return; }
-  searchAndShow(q.trim());
-}
+    const initial = getQueryParam('q') || '';
+    if (initial) {
+      const sbHero = document.getElementById('searchBoxHero');
+      if (sbHero) sbHero.value = initial;
+      // call the search function provided by app.js
+      if (typeof searchAndShow === 'function') searchAndShow(initial);
+    }
 
-// Called by the hero search input (if present on this page)
-function doSearchFromHero(){
-  const q = (document.getElementById('searchBoxHero') || {}).value || '';
-  if (!q.trim()) { alert('Type a product name to search.'); return; }
-  // navigate to results page with query param (keeps behaviour consistent)
-  window.location.href = 'results.html?q=' + encodeURIComponent(q.trim());
-}
+    function doSearchFromHero(){
+      const q = (document.getElementById('searchBoxHero') || {}).value || '';
+      if (!q.trim()) { alert('Type a product name to search.'); return; }
+      // navigate to same results page with query param so shareable URL is created
+      window.location.href = 'results.html?q=' + encodeURIComponent(q.trim());
+    }
 
-// small helper for example button
-function openExample(){ window.location.href = 'results.html?q=maggi'; }
-</script>
+    function openExample(){ window.location.href = 'results.html?q=maggi'; }
+  </script>
 </body>
 </html>
