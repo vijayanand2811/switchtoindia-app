@@ -318,3 +318,60 @@ nav a { color:var(--muted); text-decoration:none; margin-left:14px; font-size:14
   nav { font-size:13px; }
   .search button { min-width:72px; padding:8px 10px; }
 }
+
+/* ----- Home-only mobile fixes (paste at end of style.css) ----- */
+@media (max-width: 760px) {
+  /* Scope only to index/home page */
+  body.home .hero {
+    padding: 14px;
+    gap: 8px;
+  }
+
+  /* Reduce the headline so it doesn't overflow on phones */
+  body.home .hero h2 {
+    font-size: 18px !important;
+    line-height: 1.12 !important;
+    margin: 0;
+    word-break: break-word;
+    hyphens: auto;
+  }
+
+  /* Slightly reduce hero paragraph text so the block fits better */
+  body.home .hero p {
+    font-size: 13.5px;
+    margin: 0;
+  }
+
+  /* Make search input full width and stack buttons vertically for narrow screens */
+  body.home .search {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+  body.home .search input {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+  }
+  body.home .search .btn-primary,
+  body.home .search .btn-ghost {
+    width: auto;
+    align-self: flex-start;
+    min-width: 84px;
+  }
+
+  /* Reduce hero rounded box inner spacing so nothing spills horizontally */
+  body.home .hero { max-width: 100%; box-sizing: border-box; overflow: hidden; }
+
+  /* Ensure header/nav stays on one line or wraps cleanly */
+  body.home header { gap: 8px; }
+  body.home nav { gap: 8px; white-space: nowrap; }
+
+  /* Minor tweak: reduce CTA spacing on home */
+  body.home .cta-row { gap: 8px; flex-direction: column; align-items: flex-start; }
+}
+
+/* For very narrow devices, tighten headline slightly more */
+@media (max-width: 360px) {
+  body.home .hero h2 { font-size: 17px !important; }
+}
