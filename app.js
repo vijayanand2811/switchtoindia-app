@@ -355,40 +355,6 @@ window.addEventListener('DOMContentLoaded', function(){
   }
 });
 
-/* --- Onboarding Tooltip --- */
-function showOnboardingTooltip() {
-  // check if user already saw tooltip
-  if (localStorage.getItem('seen_badge_tooltip_v1')) return;
-
-  const overlay = document.createElement('div');
-  overlay.className = 'tooltip-overlay';
-  overlay.innerHTML = `
-    <div class="tooltip-box">
-      <h3>Understand the Badges</h3>
-      <p>Badges help you see brand ownership at a glance:</p>
-      <div class="tooltip-badges">
-        <span class="flag-badge indian" aria-label="Indian owned brand">Indian</span>
-        <span class="flag-badge foreign" aria-label="Foreign owned brand">Foreign</span>
-      </div>
-      <p class="small">Switch to Indian alternatives to support local businesses.</p>
-      <button class="btn btn-primary" id="tooltipClose">Got it</button>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-
-  document.getElementById('tooltipClose').addEventListener('click', () => {
-    overlay.remove();
-    localStorage.setItem('seen_badge_tooltip_v1', 'yes');
-  });
-}
-
-window.addEventListener('DOMContentLoaded', function(){
-  // Show tooltip only on home (index) or results page
-if (document.querySelector('.hero') || document.getElementById('resultsList')) {
-  showOnboardingTooltip();
-}
-
-});
 
 /* --- Onboarding tooltip (robust) --- */
 function showOnboardingTooltipOnce() {
