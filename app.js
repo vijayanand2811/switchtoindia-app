@@ -180,7 +180,20 @@ function loadBasket() {
     clearChart();
     return;
   }
-  basketItemsDiv.innerHTML = basket.map(i => `<div style="padding:6px 0"><strong>${escapeHtml(i.name)}</strong> <span class="small">(${escapeHtml(i.country||'')})</span></div>`).join('');
+  basketItemsDiv.innerHTML = basket.map(i => {
+  const isIndian = (i.country || '').toLowerCase().includes('india');
+  const badge = isIndian
+    ? '<span class="flag-badge indian">Indian</span>'
+    : '<span class="flag-badge foreign">Foreign</span>';
+
+  return `
+    <div style="padding:6px 0; display:flex; align-items:center; gap:8px;">
+      <strong>${escapeHtml(i.name)}</strong> 
+      ${badge}
+      <span class="small">(${escapeHtml(i.country||'')})</span>
+    </div>`;
+}).join('');
+
   renderImpact(basket);
 }
 

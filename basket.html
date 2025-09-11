@@ -63,10 +63,65 @@
 
 <script src="app.js"></script>
 <script>
-function clearBasket(){ localStorage.removeItem('basket'); loadBasket(); }
-function shareScore(){ const text = document.getElementById('impactText').innerText || 'My Indian score from SwitchToIndia'; if(navigator.share){ navigator.share({title:'My Indian Score', text}); } else { navigator.clipboard.writeText(text).then(()=>alert('Score copied to clipboard. Share it!')) } }
-window.addEventListener('DOMContentLoaded', function(){ loadBasket(); });
+<script>
+function clearBasket(){
+  try {
+    localStorage.removeItem('stindiabasket_v1');
+    localStorage.removeItem('basket');
+    if (typeof loadBasket === 'function') loadBasket();
+    if (typeof clearChart === 'function') clearChart();
+    if (typeof showToast === 'function') showToast('Basket cleared');
+    else alert('Basket cleared');
+  } catch (e) {
+    console.error('clearBasket error', e);
+    alert('Could not clear basket — see console for details.');
+  }
+}
+
+function shareScore(){
+  // Compose message
+  const stats = document.getElementById('impactText')?.innerText?.trim() || '';
+  const site = (window.location.origin || 'https://switchtoindia.in');
+  const url = site + '/'; // root (or change to basket.html or results)
+  const prefix = 'My Indian score from SwitchToIndia:';
+  const message = stats ? `${prefix} ${stats} — See alternatives & try it: ${url}` : `Check your SwitchToIndia score: ${url}`;
+
+  // Preferred: use Web Share API where supported (mobile)
+  if (navigator.share) {
+    navigator.share({
+      title: 'My Indian Score — SwitchToIndia',
+      text: message,
+      url: url
+    }).catch(err => {
+      // user cancelled or other error; fallback to clipboard
+      console.info('Share API error or cancelled', err);
+    });
+    return;
+  }
+
+  // Fallback: copy full message to clipboard
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(message).then(() => {
+      alert('Score copied to clipboard. Paste it in any chat to share!');
+    }).catch(() => {
+      // fallback to prompt if clipboard fails
+      prompt('Copy and share this message:', message);
+    });
+    return;
+  }
+
+  // Final fallback: prompt with text
+  prompt('Copy and share this message:', message);
+}
+
+window.addEventListener('DOMContentLoaded', function(){
+  if (typeof loadBasket === 'function') loadBasket();
+});
 </script>
+
+window.addEventListener('DOMContentLoaded', function(){ if(typeof loadBasket==='function') loadBasket(); });
+</script>
+
 
 <script>
   function doSearchFromHero(){
