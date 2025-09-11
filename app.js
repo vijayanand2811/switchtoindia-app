@@ -201,28 +201,17 @@ function updateBasketCount() {
   }
 }
 
-/* Add from results (asks for optional price) */
+/* Add from results — quick add (no price prompt). Price can be edited in basket. */
 function addToBasketFromResult(name, country) {
-  const p = prompt(`Enter price for "${name}" (leave blank if unknown):`, '');
-  let price = null;
-  if (p !== null && p.trim() !== '') {
-    const parsed = Number(p.replace(/[^0-9.]/g,''));
-    if (!isNaN(parsed)) price = parsed;
-  }
-  addToBasket(name, country, price, 1);
-  showToast(`${name} added to basket`);
+  // Add item immediately without asking for price
+  addToBasket(name, country, null, 1);
+  showToast(`${name} added to basket. You can set price in Basket.`);
 }
 
-/* Add alternative (assume Indian) */
+/* Add alternative (assume Indian) — quick add without price prompt */
 function addAlternativeToBasket(altName) {
-  const p = prompt(`Enter price for "${altName}" (leave blank if unknown):`, '');
-  let price = null;
-  if (p !== null && p.trim() !== '') {
-    const parsed = Number(p.replace(/[^0-9.]/g,''));
-    if (!isNaN(parsed)) price = parsed;
-  }
-  addToBasket(altName, 'India', price, 1);
-  showToast(`${altName} added to basket`);
+  addToBasket(altName, 'India', null, 1);
+  showToast(`${altName} added to basket. You can set price in Basket.`);
 }
 
 /* loadBasket: render grouped view with qty, edit, remove */
