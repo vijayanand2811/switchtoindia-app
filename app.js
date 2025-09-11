@@ -1,34 +1,36 @@
-// app.js - drop this in (replace previous app.js)
-// Make sure you have set AIRTABLE_TOKEN and BASE_ID (or used Netlify function).
-// This version expects your fetchProductsOnce() to return objects with fields:
-// ProductID, ProductName, Brand, ParentCompany, ParentCountry, Alternative1/2/3
+/* app.js — Clean version for SwitchToIndia
+   - Default: uses Netlify function at /.netlify/functions/getProducts
+   - Renders product thumbnail, parent, country, stacked alternatives with Switch/Add
+   - Basket persisted to localStorage under key 'stindiabasket_v1'
+   - Renders pie chart using Chart.js on basket page
+*/
 
-const AIRTABLE_TOKEN = "YOUR_PERSONAL_ACCESS_TOKEN"; // if using client-side (temporary)
-const BASE_ID = "YOUR_BASE_ID";                        // if using client-side (temporary)
-const USE_NETLIFY_FUNCTION = true; // set true if you use /.netlify/functions/getProducts
-
+/* ------------- Configuration ------------- */
+// If you want to call Airtable directly from client (NOT recommended), set to false and fill AIRTABLE_TOKEN/BASE_ID.
+const USE_NETLIFY_FUNCTION = true;
+const AIRTABLE_TOKEN = "YOUR_PERSONAL_ACCESS_TOKEN"; // only if USE_NETLIFY_FUNCTION === false
+const BASE_ID = "YOUR_BASE_ID";                     // only if USE_NETLIFY_FUNCTION === false
 const TABLE_NAME = "Products";
+
+/* ------------- Data fetch abstraction ------------- */
 let _productsCache = null;
 
-/* -------------------------
-   Data fetching abstraction
-   ------------------------- */
 async function fetchProductsOnce() {
   if (_productsCache) return _productsCache;
 
   if (USE_NETLIFY_FUNCTION) {
-    // Call your Netlify Function which hides the PAT
     const endpoint = '/.netlify/functions/getProducts';
     const res = await fetch(endpoint);
     if (!res.ok) {
-      throw new Error('Function fetch failed: ' + res.status);
+      const txt = await res.text();
+      throw new Error('Function fetch failed: ' + res.status + ' ' + txt);
     }
     const json = await res.json();
-    // function returns { records: [ ... ] }
+    // Netlify function returns { records: [ ... ] } where each record is already normalized (fields)
     _productsCache = (json.records || []).map(r => r);
     return _productsCache;
   } else {
-    // Direct Airtable fetch (not recommended for production; token visible in client)
+    // Direct client-side Airtable fetch (exposes token in browser; only for quick testing)
     const url = `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(TABLE_NAME)}?pageSize=100`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` } });
     if (!res.ok) {
@@ -41,9 +43,7 @@ async function fetchProductsOnce() {
   }
 }
 
-/* -------------------------
-   Search + rendering
-   ------------------------- */
+/* ------------- Search + render ------------- */
 async function searchAndShow(q) {
   const resultsList = document.getElementById('resultsList');
   if (!resultsList) return;
@@ -53,23 +53,16 @@ async function searchAndShow(q) {
     const all = await fetchProductsOnce();
     const ql = (q || '').toString().toLowerCase().trim();
 
-    // Match product name, brand, and alternatives
     const results = all.filter(p => {
-      const item = p.fields ? p.fields : p; // normalize shapes
+      const item = p.fields ? p.fields : p;
       const name = (item.ProductName || item.ProductID || '').toString().toLowerCase();
       const brand = (item.Brand || '').toString().toLowerCase();
       const alt1 = (item.Alternative1 || '').toString().toLowerCase();
       const alt2 = (item.Alternative2 || '').toString().toLowerCase();
       const alt3 = (item.Alternative3 || '').toString().toLowerCase();
 
-      // If query is empty, show all (or you can return [] to require a query)
-      if (!ql) return true;
-
-      return name.includes(ql)
-        || brand.includes(ql)
-        || alt1.includes(ql)
-        || alt2.includes(ql)
-        || alt3.includes(ql);
+      if (!ql) return true; // show all when query empty (you can change to false if needed)
+      return name.includes(ql) || brand.includes(ql) || alt1.includes(ql) || alt2.includes(ql) || alt3.includes(ql);
     });
 
     renderResults(results);
@@ -78,6 +71,8 @@ async function searchAndShow(q) {
     console.error(err);
   }
 }
+
+/* renderResults: creates result cards with stacked alternatives */
 function renderResults(results) {
   const container = document.getElementById('resultsList');
   const no = document.getElementById('noResults');
@@ -104,17 +99,21 @@ function renderResults(results) {
     if (item.Alternative2) alts.push(item.Alternative2);
     if (item.Alternative3) alts.push(item.Alternative3);
 
+    // stacked alternative rows
     let altHtml = '';
     if (alts.length) {
-      altHtml = '<div style="margin-top:8px"><strong>Alternatives:</strong><div style="margin-top:6px">';
+      altHtml = '<div class="alt-list" style="margin-top:10px">';
       alts.forEach((a) => {
         const safeA = escapeJS(a);
-        altHtml += `<div style="margin-top:6px; display:inline-block; margin-right:8px;">
-                      <span>${escapeHtml(a)}</span>
-                      <button class="btn btn-ghost" style="margin-left:8px;padding:6px 10px;border-radius:8px" onclick="addAlternativeToBasket('${safeA}')">Switch / Add</button>
-                    </div>`;
+        altHtml += `
+          <div class="alt-item">
+            <div class="alt-name">${escapeHtml(a)}</div>
+            <div class="alt-action">
+              <button class="btn btn-ghost small-btn" onclick="addAlternativeToBasket('${safeA}')">Switch / Add</button>
+            </div>
+          </div>`;
       });
-      altHtml += '</div></div>';
+      altHtml += '</div>';
     } else {
       altHtml = `<div style="margin-top:8px;color:#666">No alternatives listed</div>`;
     }
@@ -125,22 +124,23 @@ function renderResults(results) {
     const safeName = escapeJS(name);
     const safeCountry = escapeJS(country);
 
-    const imgHtml = imageUrl ? `<img src="${imageUrl}" alt="${escapeHtml(name)}" class="product-thumb">` : '';
+    const imgHtml = imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(name)}" class="product-thumb">` : '';
 
     const html = `
-      <div class="result-row" style="margin-bottom:10px;">
+      <div class="result-row" style="margin-bottom:12px;">
         <div class="result-left">
           <div style="display:flex;align-items:center;gap:12px;">
             ${imgHtml}
-            <div>
+            <div style="flex:1">
               <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                 <h3 style="margin:0;">${escapeHtml(name)}</h3>
                 ${badgeHtml}
-                <button class="btn btn-ghost small-btn" style="padding:6px 10px;border-radius:8px" onclick="addToBasketFromResult('${safeName}', '${safeCountry}')">Add</button>
+                <button class="btn btn-ghost small-btn" style="margin-left:6px;" onclick="addToBasketFromResult('${safeName}', '${safeCountry}')">Add</button>
               </div>
               <div class="small" style="margin-top:6px;"><strong>Brand:</strong> ${escapeHtml(brand)} &nbsp; <strong>Parent:</strong> ${escapeHtml(parent)} — ${escapeHtml(country)}</div>
             </div>
           </div>
+
           ${altHtml}
         </div>
       </div>
@@ -148,27 +148,28 @@ function renderResults(results) {
     container.insertAdjacentHTML('beforeend', html);
   });
 }
-/* -------------------------
-   Basket helpers
-   ------------------------- */
+
+/* ------------- Basket helpers (persistent) ------------- */
+const BASKET_KEY = 'stindiabasket_v1';
+
 function addToBasketFromResult(name, country) {
   addToBasket(name, country);
-  // Visual feedback (toast style)
   showToast(`${name} added to basket`);
 }
 
 function addToBasket(name, country) {
-  const cur = JSON.parse(localStorage.getItem('basket') || '[]');
-  cur.push({ name, country });
+  const cur = JSON.parse(localStorage.getItem(BASKET_KEY) || '[]');
+  cur.push({ name, country, addedAt: new Date().toISOString() });
+  localStorage.setItem(BASKET_KEY, JSON.stringify(cur));
+  // maintain legacy 'basket' key too
   localStorage.setItem('basket', JSON.stringify(cur));
-  // Update basket UI if on basket page:
   if (document.body.contains(document.getElementById('basketItems'))) loadBasket();
 }
 
 function loadBasket() {
   const basketItemsDiv = document.getElementById('basketItems');
   if (!basketItemsDiv) return;
-  const basket = JSON.parse(localStorage.getItem('basket') || '[]');
+  const basket = JSON.parse(localStorage.getItem(BASKET_KEY) || '[]');
   if (basket.length === 0) {
     basketItemsDiv.innerHTML = '<div class="small">Your basket is empty. Add items from results.</div>';
     clearChart();
@@ -178,21 +179,21 @@ function loadBasket() {
   renderImpact(basket);
 }
 
-// Add an alternative (assume Indian ownership) to basket
+/* add alternative (assumed Indian) */
 function addAlternativeToBasket(altName) {
-  // country set to "India" for alternatives — change if your Airtable has explicit alt country
   addToBasket(altName, 'India');
   showToast(`${altName} added to basket (Indian alternative)`);
 }
 
-/* -------------------------
-   Pie / Impact chart (Chart.js)
-   ------------------------- */
+/* ------------- Pie / Impact chart (Chart.js required on basket page) ------------- */
 let chartInstance = null;
+
 function clearChart() {
   if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
   const ctx = document.getElementById('pieChart')?.getContext('2d');
-  if (ctx) { ctx.clearRect(0, 0, 220, 220); document.getElementById('impactText').innerText = ''; }
+  if (ctx) { ctx.clearRect(0, 0, 220, 220); }
+  const impactTextEl = document.getElementById('impactText');
+  if (impactTextEl) impactTextEl.innerText = '';
 }
 
 function renderImpact(basket) {
@@ -207,19 +208,19 @@ function renderImpact(basket) {
 
   const ctx = document.getElementById('pieChart')?.getContext('2d');
   if (!ctx) return;
-  if (chartInstance) { chartInstance.destroy(); }
+  if (chartInstance) chartInstance.destroy();
   chartInstance = new Chart(ctx, {
     type: 'pie',
-    data: { labels: ['Indian', 'Foreign'], datasets: [{ data: [indianCount, foreignCount], backgroundColor: ['#138808', '#FF9933'] }] },
+    data: {
+      labels: ['Indian', 'Foreign'],
+      datasets: [{ data: [indianCount, foreignCount], backgroundColor: ['#138808', '#FF9933'] }]
+    },
     options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
   });
 }
 
-/* -------------------------
-   Small UI helpers
-   ------------------------- */
+/* ------------- Small UI helpers ------------- */
 function showToast(msg) {
-  // very small temporary toast
   const t = document.createElement('div');
   t.innerText = msg;
   t.style.position = 'fixed';
@@ -232,7 +233,7 @@ function showToast(msg) {
   t.style.boxShadow = '0 6px 18px rgba(0,0,0,0.2)';
   t.style.zIndex = 9999;
   document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2200);
+  setTimeout(() => t.remove(), 2000);
 }
 
 function escapeHtml(s) {
@@ -242,17 +243,14 @@ function escapeJS(s) {
   return (s + '').replace(/'/g, "\\'").replace(/"/g, '\\"');
 }
 
-/* -------------------------
-   Auto-load hooks
-   ------------------------- */
-// If results.html included ?q=... it will call searchAndShow via its small script.
-// If basket.html contains basketItems, load them:
+/* ------------- Auto-init hooks ------------- */
 if (document.body.contains(document.getElementById('basketItems'))) {
-  // If Chart.js is not yet loaded, ensure it exists
-  // Chart.js script is already added in basket.html head in previous bundle
+  // If basket UI is present, load it (and Chart.js should be included on that page)
   loadBasket();
 }
 
-// expose functions for pages
+// Export functions to window so inline onclick handlers work
 window.searchAndShow = searchAndShow;
 window.addToBasket = addToBasket;
+window.addToBasketFromResult = addToBasketFromResult;
+window.addAlternativeToBasket = addAlternativeToBasket;
