@@ -1,97 +1,105 @@
-/* app.js — Clean version for SwitchToIndia
-   - Default: uses Netlify function at /.netlify/functions/getProducts
-   - Renders product thumbnail, parent, country, stacked alternatives with Switch/Add
-   - Basket persisted to localStorage under key 'stindiabasket_v1'
-   - Renders pie chart using Chart.js on basket page
+/* app.js — SwitchToIndia full client JS
+   - Fetches products via /.netlify/functions/getProducts by default
+   - Provides search, renderResults, basket grouping + qty + price, pie chart
+   - Lightweight, defensive, and exports functions to window for inline handlers
 */
 
-/* ------------- Configuration ------------- */
-// If you want to call Airtable directly from client (NOT recommended), set to false and fill AIRTABLE_TOKEN/BASE_ID.
-const USE_NETLIFY_FUNCTION = true;
-const AIRTABLE_TOKEN = "YOUR_PERSONAL_ACCESS_TOKEN"; // only if USE_NETLIFY_FUNCTION === false
-const BASE_ID = "YOUR_BASE_ID";                     // only if USE_NETLIFY_FUNCTION === false
-const TABLE_NAME = "Products";
+/* -------- Configuration -------- */
+const USE_NETLIFY_FUNCTION = true; // set false to fetch Airtable directly (not recommended)
+const NETLIFY_FUNCTION_ENDPOINT = '/.netlify/functions/getProducts';
+const BASKET_KEY = 'stindiabasket_v1';
 
-/* ------------- Data fetch abstraction ------------- */
+/* -------- Utilities -------- */
+function escapeHtml(s){ return (s+'').replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+function escapeJS(s){ return (s+'').replace(/'/g,"\\'").replace(/"/g,'\\"'); }
+function showToast(msg){
+  try {
+    const t = document.createElement('div');
+    t.innerText = msg;
+    t.style.position='fixed'; t.style.right='18px'; t.style.bottom='18px';
+    t.style.padding='10px 14px'; t.style.background='#111'; t.style.color='#fff';
+    t.style.borderRadius='10px'; t.style.boxShadow='0 6px 18px rgba(0,0,0,0.18)';
+    t.style.zIndex=99999;
+    document.body.appendChild(t);
+    setTimeout(()=>t.remove(),2000);
+  } catch(e){ console.warn('showToast failed', e); }
+}
+
+/* -------- Data fetch -------- */
 let _productsCache = null;
-
-async function fetchProductsOnce() {
+async function fetchProductsOnce(){
   if (_productsCache) return _productsCache;
 
   if (USE_NETLIFY_FUNCTION) {
-    const endpoint = '/.netlify/functions/getProducts';
-    const res = await fetch(endpoint);
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error('Function fetch failed: ' + res.status + ' ' + txt);
+    try {
+      const res = await fetch(NETLIFY_FUNCTION_ENDPOINT);
+      if (!res.ok) {
+        const txt = await res.text().catch(()=>'<no body>');
+        throw new Error(`Function returned ${res.status}: ${txt}`);
+      }
+      const json = await res.json();
+      // accept either {records:[{fields:{...}}]} or simple array
+      const records = json.records ? json.records : (Array.isArray(json) ? json : []);
+      _productsCache = records.map(r => r.fields ? r.fields : r);
+      return _productsCache;
+    } catch (e) {
+      console.error('Netlify function fetch failed:', e);
+      // fallback to empty list
+      _productsCache = [];
+      return _productsCache;
     }
-    const json = await res.json();
-    // Netlify function returns { records: [ ... ] } where each record is already normalized (fields)
-    _productsCache = (json.records || []).map(r => r);
-    return _productsCache;
   } else {
-    // Direct client-side Airtable fetch (exposes token in browser; only for quick testing)
-    const url = `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(TABLE_NAME)}?pageSize=100`;
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` } });
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error('Airtable fetch failed: ' + res.status + ' ' + txt);
-    }
-    const json = await res.json();
-    _productsCache = (json.records || []).map(r => r.fields || {});
+    // If you ever enable direct Airtable fetch, implement here.
+    _productsCache = [];
     return _productsCache;
   }
 }
 
-/* ------------- Search + render ------------- */
+/* -------- Search + render pipeline -------- */
 async function searchAndShow(q) {
-  const resultsList = document.getElementById('resultsList');
-  if (!resultsList) return;
-  resultsList.innerHTML = '<div class="small">Searching…</div>';
+  const container = document.getElementById('resultsList');
+  if (!container) return;
+  container.innerHTML = '<div class="small">Searching…</div>';
 
   try {
     const all = await fetchProductsOnce();
-    const ql = (q || '').toString().toLowerCase().trim();
-
-    const results = all.filter(p => {
-      const item = p.fields ? p.fields : p;
-      const name = (item.ProductName || item.ProductID || '').toString().toLowerCase();
-      const brand = (item.Brand || '').toString().toLowerCase();
-      const alt1 = (item.Alternative1 || '').toString().toLowerCase();
-      const alt2 = (item.Alternative2 || '').toString().toLowerCase();
-      const alt3 = (item.Alternative3 || '').toString().toLowerCase();
-
-      if (!ql) return true; // show all when query empty (you can change to false if needed)
+    const ql = (q||'').toString().toLowerCase().trim();
+    const results = all.filter(item => {
+      const name = (item.ProductName||item.ProductID||'').toString().toLowerCase();
+      const brand = (item.Brand||'').toString().toLowerCase();
+      const alt1 = (item.Alternative1||'').toString().toLowerCase();
+      const alt2 = (item.Alternative2||'').toString().toLowerCase();
+      const alt3 = (item.Alternative3||'').toString().toLowerCase();
+      if (!ql) return true;
       return name.includes(ql) || brand.includes(ql) || alt1.includes(ql) || alt2.includes(ql) || alt3.includes(ql);
     });
-
     renderResults(results);
   } catch (err) {
-    resultsList.innerHTML = `<div class="small">Error fetching data: ${escapeHtml(err.message || err)}</div>`;
-    console.error(err);
+    console.error('searchAndShow error', err);
+    container.innerHTML = `<div class="small">Error loading data. See console.</div>`;
   }
 }
 
-/* renderResults: creates result cards with stacked alternatives */
+/* renderResults: displays product card + stacked alternatives */
 function renderResults(results) {
   const container = document.getElementById('resultsList');
   const no = document.getElementById('noResults');
+  if (!container) return;
   container.innerHTML = '';
 
   if (!results || results.length === 0) {
     if (no) no.style.display = 'block';
+    else container.innerHTML = '<div class="small">No results</div>';
     return;
   } else if (no) {
     no.style.display = 'none';
   }
 
-  results.forEach(p => {
-    const item = p.fields ? p.fields : p;
-
+  results.forEach(item => {
     const name = item.ProductName || item.ProductID || 'Unnamed product';
     const brand = item.Brand || '';
-    const parent = item.ParentCompany || 'Unknown';
-    const country = item.ParentCountry || 'Unknown';
+    const parent = item.ParentCompany || '';
+    const country = item.ParentCountry || '';
     const imageUrl = item.ImageURL || '';
 
     const alts = [];
@@ -99,45 +107,41 @@ function renderResults(results) {
     if (item.Alternative2) alts.push(item.Alternative2);
     if (item.Alternative3) alts.push(item.Alternative3);
 
-    // Build alternatives block with heading
+    const isIndianParent = (country||'').toString().toLowerCase().includes('india');
+    const badgeHtml = isIndianParent
+      ? '<span class="flag-badge indian" aria-label="Indian owned brand">Indian</span>'
+      : '<span class="flag-badge foreign" aria-label="Foreign owned brand">Foreign</span>';
+
+    const imgHtml = imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(name)}" class="product-thumb">` : '';
+
     let altHtml = '';
     if (alts.length) {
-      altHtml = '<div class="alt-list">';
+      altHtml += '<div class="alt-list">';
       altHtml += '<div style="margin-bottom:8px;font-weight:700;color:#333">Alternatives:</div>';
-      alts.forEach((a) => {
-  const safeA = escapeJS(a);
-  altHtml += `
-    <div class="alt-item">
-      <div class="alt-name">
-        ${escapeHtml(a)} <span class="flag-badge indian">Indian</span>
-      </div>
-      <div class="alt-action">
-        <button class="btn btn-ghost small-btn" onclick="addAlternativeToBasket('${safeA}')">Switch / Add</button>
-      </div>
-    </div>`;
-});
-
+      alts.forEach(a => {
+        const safeA = escapeJS(a);
+        // assume alternatives are Indian — show green badge next to them
+        altHtml += `
+          <div class="alt-item">
+            <div class="alt-name">${escapeHtml(a)} <span class="flag-badge indian" aria-label="Indian owned brand">Indian</span></div>
+            <div class="alt-action">
+              <button class="btn btn-ghost small-btn" onclick="addAlternativeToBasket('${safeA}')">Switch / Add</button>
+            </div>
+          </div>`;
+      });
       altHtml += '</div>';
-    } else {
-      altHtml = `<div style="margin-top:8px;color:#666">No alternatives listed</div>`;
     }
-
-    const isIndian = (country || '').toString().toLowerCase().includes('india');
-    const badgeHtml = isIndian
-      ? '<span class="flag-badge indian">Indian</span>'
-      : '<span class="flag-badge foreign">Foreign</span>';
 
     const safeName = escapeJS(name);
     const safeCountry = escapeJS(country);
-    const imgHtml = imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(name)}" class="product-thumb">` : '';
 
     const html = `
-      <div class="result-row" style="margin-bottom:12px;">
+      <div class="result-row card" style="margin-bottom:12px;">
         <div class="result-left">
           <div style="display:flex;align-items:center;gap:12px;">
             ${imgHtml}
             <div style="flex:1">
-              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
                 <h3 style="margin:0;">${escapeHtml(name)}</h3>
                 ${badgeHtml}
                 <button class="btn btn-ghost small-btn" style="margin-left:6px;" onclick="addToBasketFromResult('${safeName}', '${safeCountry}')">Add</button>
@@ -145,7 +149,6 @@ function renderResults(results) {
               <div class="small" style="margin-top:8px;"><strong>Brand:</strong> ${escapeHtml(brand)} &nbsp; <strong>Parent:</strong> ${escapeHtml(parent)} — ${escapeHtml(country)}</div>
             </div>
           </div>
-
           ${altHtml}
         </div>
       </div>
@@ -154,110 +157,67 @@ function renderResults(results) {
   });
 }
 
-/* ---------- Basket: grouped items, qty, price, remove/confirm ---------- */
-
-const BASKET_KEY = 'stindiabasket_v1';
-
-/*
- Helper: read basket array from storage (array of {id,name,country,qty,price})
- */
-function readBasket() {
-  try {
-    return JSON.parse(localStorage.getItem(BASKET_KEY) || '[]');
-  } catch (e) {
-    console.error('readBasket parse error', e);
-    return [];
-  }
+/* -------- Basket helpers (grouped, qty, price) -------- */
+function readBasket(){
+  try { return JSON.parse(localStorage.getItem(BASKET_KEY) || '[]'); } catch(e){ console.error(e); return []; }
 }
+function writeBasket(arr){ localStorage.setItem(BASKET_KEY, JSON.stringify(arr)); localStorage.setItem('basket', JSON.stringify(arr)); }
 
-/*
- Helper: write basket
- */
-function writeBasket(arr) {
-  localStorage.setItem(BASKET_KEY, JSON.stringify(arr));
-  // keep legacy for compatibility
-  localStorage.setItem('basket', JSON.stringify(arr));
-}
-
-/*
- Add to basket: merges into existing item by key (name|country)
- price is optional (number or null). qty defaults to 1.
- */
+/* addToBasket: name, country, price (number|null), qty */
 function addToBasket(name, country, price = null, qty = 1) {
   const key = `${(name||'').trim()}|${(country||'').trim()}`;
   const cur = readBasket();
   const idx = cur.findIndex(i => i.key === key);
   if (idx >= 0) {
     cur[idx].qty = (cur[idx].qty || 0) + qty;
-    // if new price provided and existing price missing, set it
-    if (price != null && (!cur[idx].price || cur[idx].price === null)) cur[idx].price = Number(price);
+    if (price != null && (!cur[idx].price || cur[idx].price == null)) cur[idx].price = Number(price);
   } else {
-    cur.push({
-      id: Date.now() + Math.random().toString(16).slice(2,8),
-      key,
-      name,
-      country,
-      qty,
-      price: price != null ? Number(price) : null
-    });
+    cur.push({ id: Date.now() + Math.random().toString(16).slice(2,8), key, name, country, qty, price: price != null ? Number(price) : null });
   }
   writeBasket(cur);
   if (document.body.contains(document.getElementById('basketItems'))) loadBasket();
 }
 
-/*
- Called from results Add button (prompt user for price)
- */
+/* Add from results (asks for optional price) */
 function addToBasketFromResult(name, country) {
-  // ask user for price (optional)
   const p = prompt(`Enter price for "${name}" (leave blank if unknown):`, '');
   let price = null;
   if (p !== null && p.trim() !== '') {
-    const parsed = Number(p.replace(/[^0-9.]/g, ''));
+    const parsed = Number(p.replace(/[^0-9.]/g,''));
     if (!isNaN(parsed)) price = parsed;
   }
   addToBasket(name, country, price, 1);
-  if (typeof showToast === 'function') showToast(`${name} added to basket`);
+  showToast(`${name} added to basket`);
 }
 
-/*
- Called when user clicks "Switch / Add" on an alternative (we assume it's Indian)
- */
+/* Add alternative (assume Indian) */
 function addAlternativeToBasket(altName) {
-  // prompt for price optionally
   const p = prompt(`Enter price for "${altName}" (leave blank if unknown):`, '');
   let price = null;
   if (p !== null && p.trim() !== '') {
-    const parsed = Number(p.replace(/[^0-9.]/g, ''));
+    const parsed = Number(p.replace(/[^0-9.]/g,''));
     if (!isNaN(parsed)) price = parsed;
   }
   addToBasket(altName, 'India', price, 1);
-  if (typeof showToast === 'function') showToast(`${altName} added to basket`);
+  showToast(`${altName} added to basket`);
 }
 
-/*
- loadBasket: render basketItems div showing grouped rows with qty, +/- buttons,
- Edit Price, Remove (with confirmation). Also calls renderImpact()
- */
+/* loadBasket: render grouped view with qty, edit, remove */
+let chartInstance = null;
 function loadBasket() {
   const basketItemsDiv = document.getElementById('basketItems');
   if (!basketItemsDiv) return;
   const basket = readBasket();
-
   if (!basket || basket.length === 0) {
     basketItemsDiv.innerHTML = '<div class="small">Your basket is empty. Add items from results.</div>';
-    if (typeof clearChart === 'function') clearChart(); else {
-      const impactTextEl = document.getElementById('impactText'); if (impactTextEl) impactTextEl.innerText = '';
-    }
+    if (typeof clearChart === 'function') clearChart();
+    else { const it = document.getElementById('impactText'); if (it) it.innerText = ''; }
     return;
   }
 
-  // build rows
   const html = basket.map((item, index) => {
-    const isIndian = (item.country || '').toLowerCase().includes('india');
-    const badge = isIndian
-      ? '<span class="flag-badge indian" aria-label="Indian owned brand">Indian</span>'
-      : '<span class="flag-badge foreign" aria-label="Foreign owned brand">Foreign</span>';
+    const isIndian = (item.country||'').toString().toLowerCase().includes('india');
+    const badge = isIndian ? '<span class="flag-badge indian" aria-label="Indian owned brand">Indian</span>' : '<span class="flag-badge foreign" aria-label="Foreign owned brand">Foreign</span>';
     const priceText = item.price != null ? `₹ ${Number(item.price).toFixed(2)}` : 'Price: N/A';
     return `
       <div class="basket-row card" data-index="${index}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;padding:10px;">
@@ -289,52 +249,40 @@ function loadBasket() {
   renderImpact(basket);
 }
 
-/*
- update quantity by delta (positive or negative)
- if qty drops to 0, confirm remove.
- */
+/* updateQuantity */
 function updateQuantity(index, delta) {
   const cur = readBasket();
   if (!cur[index]) return;
   cur[index].qty = (cur[index].qty || 0) + delta;
   if (cur[index].qty <= 0) {
     const ok = confirm(`Remove "${cur[index].name}" from basket?`);
-    if (!ok) {
-      // restore to 1
-      cur[index].qty = 1;
-    } else {
-      cur.splice(index,1);
-    }
+    if (!ok) { cur[index].qty = 1; }
+    else { cur.splice(index,1); }
   }
   writeBasket(cur);
   loadBasket();
-  if (typeof showToast === 'function') showToast('Basket updated');
+  showToast('Basket updated');
 }
 
-/*
- edit price for an item: prompt user
- */
+/* editPrice */
 function editPrice(index) {
   const cur = readBasket();
   if (!cur[index]) return;
   const current = cur[index].price != null ? cur[index].price : '';
   const p = prompt(`Enter price for "${cur[index].name}":`, current);
-  if (p === null) return; // canceled
-  if (p.trim() === '') {
-    cur[index].price = null;
-  } else {
+  if (p === null) return;
+  if (p.trim() === '') { cur[index].price = null; }
+  else {
     const parsed = Number(p.replace(/[^0-9.]/g,''));
     if (!isNaN(parsed)) cur[index].price = parsed;
     else { alert('Invalid number'); return; }
   }
   writeBasket(cur);
   loadBasket();
-  if (typeof showToast === 'function') showToast('Price updated');
+  showToast('Price updated');
 }
 
-/*
- remove item with confirmation
- */
+/* removeItem */
 function removeItem(index) {
   const cur = readBasket();
   if (!cur[index]) return;
@@ -343,22 +291,25 @@ function removeItem(index) {
   cur.splice(index,1);
   writeBasket(cur);
   loadBasket();
-  if (typeof showToast === 'function') showToast('Item removed');
+  showToast('Item removed');
 }
 
-/*
- renderImpact now calculates monetary totals (uses price * qty where available)
- and shows counts as before.
- */
-let chartInstance = null;
+/* clearChart (if used elsewhere) */
+function clearChart() {
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+  const ctx = document.getElementById('pieChart')?.getContext('2d');
+  if (ctx) ctx.clearRect(0,0,220,220);
+  const impactTextEl = document.getElementById('impactText');
+  if (impactTextEl) impactTextEl.innerText = '';
+}
+
+/* renderImpact (counts + monetary totals) */
 function renderImpact(basket) {
-  // counts
-  const indianCount = basket.filter(i => (i.country||'').toLowerCase().includes('india')).reduce((s,i)=>s+i.qty,0);
-  const foreignCount = basket.reduce((s,i)=>s + (i.qty || 0),0) - indianCount;
+  const indianCount = basket.filter(i => (i.country||'').toLowerCase().includes('india')).reduce((s,i)=>s+(i.qty||0),0);
+  const foreignCount = basket.reduce((s,i)=>s+(i.qty||0),0) - indianCount;
   const totalCount = indianCount + foreignCount;
   const indianPct = totalCount === 0 ? 0 : Math.round((indianCount/totalCount)*10000)/100;
 
-  // monetary totals (only where price defined)
   let indianAmount = 0, foreignAmount = 0;
   basket.forEach(i => {
     const val = (i.price != null && !isNaN(i.price)) ? (Number(i.price) * (i.qty||1)) : 0;
@@ -374,7 +325,6 @@ function renderImpact(basket) {
     impactTextEl.innerText = [cntText, amtText].filter(Boolean).join(' — ');
   }
 
-  // pie chart (uses counts)
   const ctx = document.getElementById('pieChart')?.getContext('2d');
   if (!ctx) return;
   if (chartInstance) chartInstance.destroy();
@@ -388,74 +338,33 @@ function renderImpact(basket) {
   });
 }
 
-/* end of basket block */
+/* -------- Init on load (populate search box if query param present) -------- */
+window.addEventListener('DOMContentLoaded', function(){
+  // wire up initial search param on results page
+  const initial = new URL(window.location.href).searchParams.get('q') || '';
+  if (initial && document.body.contains(document.getElementById('resultsList'))) {
+    const sb = document.getElementById('searchBox');
+    const sbh = document.getElementById('searchBoxHero');
+    if (sb) sb.value = initial;
+    if (sbh) sbh.value = initial;
+    searchAndShow(initial);
+  }
+  // load basket if present
+  if (document.body.contains(document.getElementById('basketItems'))) {
+    loadBasket();
+  }
+});
 
-/* ------------- Pie / Impact chart (Chart.js required on basket page) ------------- */
-let chartInstance = null;
-
-function clearChart() {
-  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
-  const ctx = document.getElementById('pieChart')?.getContext('2d');
-  if (ctx) { ctx.clearRect(0, 0, 220, 220); }
-  const impactTextEl = document.getElementById('impactText');
-  if (impactTextEl) impactTextEl.innerText = '';
-}
-
-function renderImpact(basket) {
-  const indianCount = basket.filter(i => (i.country || '').toString().toLowerCase().includes('india')).length;
-  const foreignCount = basket.length - indianCount;
-  const total = basket.length;
-  const indianPct = total === 0 ? 0 : Math.round((indianCount / total) * 10000) / 100;
-  const foreignPct = Math.round((100 - indianPct) * 100) / 100;
-  const text = `Indian: ${indianCount} (${indianPct}%) — Foreign: ${foreignCount} (${foreignPct}%)`;
-  const impactTextEl = document.getElementById('impactText');
-  if (impactTextEl) impactTextEl.innerText = text;
-
-  const ctx = document.getElementById('pieChart')?.getContext('2d');
-  if (!ctx) return;
-  if (chartInstance) chartInstance.destroy();
-  chartInstance = new Chart(ctx, {
-    type: 'pie',
-    data: {
-      labels: ['Indian', 'Foreign'],
-      datasets: [{ data: [indianCount, foreignCount], backgroundColor: ['#138808', '#FF9933'] }]
-    },
-    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
-  });
-}
-
-/* ------------- Small UI helpers ------------- */
-function showToast(msg) {
-  const t = document.createElement('div');
-  t.innerText = msg;
-  t.style.position = 'fixed';
-  t.style.right = '18px';
-  t.style.bottom = '18px';
-  t.style.padding = '10px 14px';
-  t.style.background = '#111';
-  t.style.color = '#fff';
-  t.style.borderRadius = '10px';
-  t.style.boxShadow = '0 6px 18px rgba(0,0,0,0.2)';
-  t.style.zIndex = 9999;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2000);
-}
-
-function escapeHtml(s) {
-  return (s + '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-function escapeJS(s) {
-  return (s + '').replace(/'/g, "\\'").replace(/"/g, '\\"');
-}
-
-/* ------------- Auto-init hooks ------------- */
-if (document.body.contains(document.getElementById('basketItems'))) {
-  // If basket UI is present, load it (and Chart.js should be included on that page)
-  loadBasket();
-}
-
-// Export functions to window so inline onclick handlers work
+/* expose functions to window for inline onclick handlers */
+window.fetchProductsOnce = fetchProductsOnce;
 window.searchAndShow = searchAndShow;
+window.renderResults = renderResults;
 window.addToBasket = addToBasket;
 window.addToBasketFromResult = addToBasketFromResult;
 window.addAlternativeToBasket = addAlternativeToBasket;
+window.loadBasket = loadBasket;
+window.updateQuantity = updateQuantity;
+window.editPrice = editPrice;
+window.removeItem = removeItem;
+window.clearChart = clearChart;
+window.showToast = showToast;
