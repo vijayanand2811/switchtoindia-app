@@ -1,6 +1,6 @@
 /* -----------------------
    SwitchToIndia - style.css
-   Clean, single-file stylesheet
+   Clean, updated version
    ----------------------- */
 
 :root{
@@ -78,7 +78,11 @@ nav a{ color:var(--muted); text-decoration:none; margin-left:14px; font-size:14p
 .result-left{ flex:1; }
 .result-left h3{ margin:0; font-size:16px; }
 
-/* Badge */
+/* Badge + Add button spacing */
+.result-left .flag-badge{ margin-left:4px; }
+.result-left .btn-ghost.small-btn{ margin-left:8px; }
+
+/* Badge style */
 .flag-badge{
   padding:6px 10px; border-radius:999px; background:#f2f2f2; color:#333; font-weight:600; font-size:13px;
 }
@@ -91,12 +95,16 @@ nav a{ color:var(--muted); text-decoration:none; margin-left:14px; font-size:14p
 /* Alternatives list — stacked rows */
 .alt-list{ margin-top:10px; display:block; }
 .alt-item{
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
-  padding:8px; border-radius:8px; margin-bottom:8px;
-  background:#fff; border:1px solid #f3f1ed;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 12px; margin-bottom:8px;
+  border-radius:8px;
+  background:#fafafa;
+  border:1px solid #eee;
+  transition: background 0.2s ease;
 }
-.alt-item .alt-name{ font-size:15px; color:#111; }
-.alt-item .alt-action{ flex:0 0 auto; }
+.alt-item:hover{ background:#f5f5f5; }
+.alt-item .alt-name{ font-size:15px; font-weight:500; color:#111; }
+.alt-item .alt-action button{ padding:6px 12px; border-radius:6px; font-size:14px; }
 
 /* Footer */
 .footer{ margin:30px 0; padding:18px 0; border-top:1px solid #f0eee9; color:var(--muted); font-size:13px; }
