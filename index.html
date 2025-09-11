@@ -142,16 +142,13 @@
   </div>
 
 <script>
-  // Small helpers to integrate with your app.js later
-  function doSearch(){
-    const q = document.getElementById('searchBox').value.trim();
-    if(!q){ alert('Type a product name to search.'); return; }
-    // redirect to results page with query param (results.html will read ?q=)
-    window.location.href = 'results.html?q='+encodeURIComponent(q);
+  function doSearchFromHero(){
+    const q = (document.getElementById('searchBoxHero') || {}).value || '';
+    if (!q.trim()) { alert('Type a product name to search.'); return; }
+    window.location.href = 'results.html?q=' + encodeURIComponent(q.trim());
   }
-  function openExample(){
-    window.location.href = 'results.html?q=maggi';
-  }
+
+  function openExample(){ window.location.href = 'results.html?q=maggi'; }
 </script>
 </body>
 </html>
