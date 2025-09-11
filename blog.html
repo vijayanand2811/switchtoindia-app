@@ -31,11 +31,11 @@
   <h2>Discover who owns the brands you buy — and switch to Indian alternatives.</h2>
   <p>Type a product, scan a barcode later, and see instant Indian alternatives. Minimal. Fast. Neutral.</p>
 
-  <div class="search" style="margin-top:8px">
-    <input id="searchBoxHero" placeholder="Type a product (e.g., noodles, soap)" aria-label="Search product">
-    <button class="btn btn-primary" onclick="doSearchFromHero()">Search</button>
-    <button class="btn btn-ghost" onclick="openExample()">Try Example</button>
-  </div>
+  <div class="search" style="margin-top:8px; display:flex; gap:8px; max-width:640px;">
+  <input id="searchBoxHero" placeholder="Type a product (e.g., noodles, soap)" aria-label="Search product" style="flex:1;padding:12px;border-radius:10px;border:1px solid #eee" />
+  <button class="btn btn-primary" onclick="doSearchFromHero()" style="padding:10px 16px;">Search</button>
+  <button class="btn btn-ghost" onclick="openExample()" style="padding:10px 16px;">Try Example</button>
+</div>
 </section>
 
 <main>
@@ -83,8 +83,14 @@
 </div>
 
 <script>
-function doSearchFromHero(){ const q=document.getElementById('searchBoxHero').value.trim(); if(!q){alert('Type product');return;} window.location.href='results.html?q='+encodeURIComponent(q); }
-function openExample(){ window.location.href='results.html?q=maggi'; }
+  function doSearchFromHero(){
+    const q = (document.getElementById('searchBoxHero') || {}).value || '';
+    if (!q.trim()) { alert('Type a product name to search.'); return; }
+    window.location.href = 'results.html?q=' + encodeURIComponent(q.trim());
+  }
+
+  function openExample(){ window.location.href = 'results.html?q=maggi'; }
 </script>
+
 </body>
 </html>

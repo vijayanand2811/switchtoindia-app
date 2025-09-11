@@ -181,6 +181,14 @@ function loadBasket() {
   renderImpact(basket);
 }
 
+function clearBasket() {
+  localStorage.removeItem('stindiabasket_v1');  // clear new key
+  localStorage.removeItem('basket');           // clear legacy key
+  loadBasket(); // reload basket UI (will show empty message + clear chart)
+  showToast("Basket cleared");
+}
+
+
 /* add alternative (assumed Indian) */
 function addAlternativeToBasket(altName) {
   addToBasket(altName, 'India');

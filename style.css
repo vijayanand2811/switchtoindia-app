@@ -41,6 +41,14 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
 nav a { color:var(--muted); text-decoration:none; margin-left:14px; font-size:14px; }
 
 /* Hero */
+/* Keep hero sections visually consistent height across pages */
+.hero {
+  min-height: 160px;   /* adjust as needed */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 .hero {
   background: linear-gradient(90deg, rgba(255,160,80,0.06), rgba(19,136,8,0.02));
   border-radius:var(--radius);
