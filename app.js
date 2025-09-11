@@ -390,65 +390,6 @@ if (document.querySelector('.hero') || document.getElementById('resultsList')) {
 
 });
 
-/* --- Onboarding tooltip (robust) --- */
-function showOnboardingTooltipOnce() {
-  try {
-    if (localStorage.getItem('seen_badge_tooltip_v1')) return;
-    // ensure CSS present (inject if missing)
-    if (!document.querySelector('style[data-switchtoindia-tooltip]')) {
-      const s = document.createElement('style');
-      s.setAttribute('data-switchtoindia-tooltip','1');
-      s.innerText = `
-        .tooltip-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:9999}
-        .tooltip-box{background:#fff;border-radius:12px;padding:20px;max-width:360px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,0.25)}
-        .tooltip-box h3{margin-top:0;margin-bottom:10px}
-        .tooltip-badges{display:flex;justify-content:center;gap:12px;margin:12px 0}
-        .flag-badge.indian{background:#138808;color:#fff;padding:6px 10px;border-radius:6px}
-        .flag-badge.foreign{background:#d9534f;color:#fff;padding:6px 10px;border-radius:6px}
-        .tooltip-box button{margin-top:12px}
-      `;
-      document.head.appendChild(s);
-    }
-
-    // wait one paint + small timeout so home content is available
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        const isHomeSelector = !!document.querySelector('.hero');
-        const isResultsSelector = !!document.getElementById('resultsList')
-                                  || !!document.querySelector('.results-grid')
-                                  || !!document.querySelector('.results')
-                                  || !!document.querySelector('.result-row')
-                                  || location.pathname.toLowerCase().includes('results');
-        const isHomePath = location.pathname === '/' || location.pathname.toLowerCase().endsWith('/index.html');
-        const shouldShow = isHomeSelector || isHomePath || isResultsSelector;
-        if (!shouldShow) return;
-        const overlay = document.createElement('div');
-        overlay.className = 'tooltip-overlay';
-        overlay.innerHTML = `
-          <div class="tooltip-box" role="dialog" aria-labelledby="tooltipTitle" aria-describedby="tooltipDesc">
-            <h3 id="tooltipTitle">Understand the Badges</h3>
-            <p id="tooltipDesc">Badges help you see brand ownership at a glance:</p>
-            <div class="tooltip-badges">
-              <span class="flag-badge indian" aria-label="Indian owned brand">Indian</span>
-              <span class="flag-badge foreign" aria-label="Foreign owned brand">Foreign</span>
-            </div>
-            <p class="small">Switch to Indian alternatives to support local businesses.</p>
-            <button class="btn btn-primary" id="tooltipClose">Got it</button>
-          </div>`;
-        document.body.appendChild(overlay);
-        document.getElementById('tooltipClose').addEventListener('click', () => {
-          overlay.remove();
-          localStorage.setItem('seen_badge_tooltip_v1', 'yes');
-        });
-      }, 200);
-    });
-  } catch (e) {
-    console.error('showOnboardingTooltipOnce error', e);
-  }
-}
-window.addEventListener('DOMContentLoaded', showOnboardingTooltipOnce);
-
-
 /* expose functions to window for inline onclick handlers */
 window.fetchProductsOnce = fetchProductsOnce;
 window.searchAndShow = searchAndShow;
