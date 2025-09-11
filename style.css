@@ -9,6 +9,12 @@
   --radius:12px;
   --max-w:840px;
 }
+
+#pieChart {
+  max-width: 160px;
+  max-height: 160px;
+}
+
 *{box-sizing:border-box}
 body{font-family:Inter,system-ui,Arial,sans-serif;margin:0;background:linear-gradient(180deg,#fff,#fbf9f7);color:#111;-webkit-font-smoothing:antialiased}
 .wrap{max-width:var(--max-w);margin:0 auto;padding:20px}
@@ -32,9 +38,26 @@ nav a{color:var(--muted);text-decoration:none;margin-left:14px;font-size:14px}
 .small{font-size:13px;color:var(--muted)}
 .flag-badge{font-size:12px;padding:6px 10px;border-radius:999px;background:#f2f2f2;color:#333}
 .results-grid{display:grid;gap:10px}
-.result-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px;border-radius:10px;border:1px solid #f0eee9;background:#fff}
-.result-left{flex:1}
-.result-right{width:150px;text-align:right}
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* keep top-aligned */
+  gap: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #f0eee9;
+  background: #fff;
+}
+
+.result-left { flex: 1; }
+
+.result-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* right aligned */
+  justify-content: flex-start; /* start at top */
+  gap: 6px;
+}
 .result-left h3{margin:0 0 6px 0;font-size:16px}
 .footer{margin:30px 0;padding:18px 0;border-top:1px solid #f0eee9;color:var(--muted);font-size:13px}
 .no-margin{margin:0}

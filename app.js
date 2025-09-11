@@ -138,7 +138,8 @@ function renderResults(results) {
         <div class="result-right">
           ${badge}
           <div style="height:10px"></div>
-          <button class="btn btn-primary" onclick="addToBasketFromResult('${safeName}', '${safeCountry}')">Add to Basket</button>
+          <button class="btn btn-ghost" style="padding:6px 10px;border-radius:8px"
+        onclick="addToBasketFromResult('${safeName}', '${safeCountry}')">Add</button>
         </div>
       </div>
     `;
