@@ -1,8 +1,6 @@
 /* -----------------------
-   SwitchToIndia - style.css
-   Clean version with
-   - Button alignment fix
-   - Red/Green badges
+   SwitchToIndia - final style.css
+   Includes badge colors + stacked alternatives + button spacing
    ----------------------- */
 
 :root {
@@ -14,7 +12,7 @@
   --bg:#faf8f6;
   --accent:#ff7a00;
   --radius:12px;
-  --max-w:840px;
+  --max-w:920px;
 }
 
 /* Pie size */
@@ -37,8 +35,7 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
 .logo .badge {
   width:44px; height:44px; border-radius:50%;
   background: linear-gradient(135deg,var(--saffron),#fff 50%,var(--green));
-  display:grid; place-items:center;
-  box-shadow:0 6px 18px rgba(0,0,0,0.06);
+  display:grid; place-items:center; box-shadow:0 6px 18px rgba(0,0,0,0.06);
 }
 .logo h1 { font-size:20px; margin:0; font-weight:700; }
 nav a { color:var(--muted); text-decoration:none; margin-left:14px; font-size:14px; }
@@ -63,95 +60,52 @@ nav a { color:var(--muted); text-decoration:none; margin-left:14px; font-size:14
 
 /* Inputs */
 .search input, .search-input {
-  flex:1; padding:12px; border-radius:10px;
-  border:1px solid #eee; font-size:15px;
+  flex:1; padding:12px; border-radius:10px; border:1px solid #eee; font-size:15px;
 }
 
-/* Layout */
+/* Cards/layout */
 .grid { display:grid; grid-template-columns:repeat(1,1fr); gap:12px; margin-top:12px; }
-@media(min-width:760px) {
-  .grid { grid-template-columns:repeat(3,1fr); }
-  .hero h2 { font-size:28px; }
-}
-
-/* Cards */
-.card {
-  background:var(--card);
-  padding:14px; border-radius:12px;
-  box-shadow:0 10px 30px rgba(12,12,12,0.04);
-  margin-bottom:12px;
-}
-.card h4 { margin:0 0 8px 0; font-size:16px; }
-.card p { margin:0; color:var(--muted); font-size:14px; }
+@media(min-width:760px) { .grid { grid-template-columns:repeat(3,1fr); } .hero h2 { font-size:28px } }
+.card { background:var(--card); padding:14px; border-radius:12px; box-shadow:0 10px 30px rgba(12,12,12,0.04); margin-bottom:12px; }
 .small { font-size:13px; color:var(--muted); }
 
 /* Results */
-.results-grid { display:grid; gap:10px; }
-
-/* Result row */
 .result-row {
   display:flex; gap:12px; align-items:flex-start;
-  padding:10px; border-radius:10px;
-  border:1px solid #f0eee9; background:#fff;
+  padding:12px; border-radius:10px; border:1px solid #f0eee9; background:#fff;
 }
 .result-left { flex:1; }
 .result-left h3 { margin:0; font-size:16px; }
 
-/* Badge styles */
+/* Badges - colored */
 .flag-badge {
-  padding:4px 8px;
-  border-radius:999px;
-  font-weight:600;
-  font-size:13px;
-  color:#fff;
+  padding:6px 10px; border-radius:999px; font-weight:700; font-size:13px; color:#fff; display:inline-block;
 }
 .flag-badge.indian { background:var(--green); }
 .flag-badge.foreign { background:var(--red); }
 
-/* Align Add button near product title */
+/* Add button near product title */
 .result-left .btn-ghost.small-btn {
-  margin-left:8px;
-  padding:6px 10px;
-  border-radius:8px;
-  height:32px;
+  margin-left:8px; padding:6px 10px; border-radius:8px; height:34px;
 }
 
-/* Product thumbnail */
-.product-thumb {
-  width:56px; height:56px;
-  object-fit:cover;
-  border-radius:8px;
-  border:1px solid #eee;
-}
+/* Thumbnail */
+.product-thumb { width:56px; height:56px; object-fit:cover; border-radius:8px; border:1px solid #eee; }
 
-/* Alternatives list */
-.alt-list { margin-top:10px; display:block; }
+/* Alternatives list + heading */
+.alt-list { margin-top:12px; display:block; }
+.alt-list > div:first-child { margin-bottom:10px; color:#333; font-weight:700; font-size:14px; }
 .alt-item {
-  display:flex; align-items:center; gap:12px;
-  padding:8px 12px;
-  border-radius:8px;
-  margin-bottom:8px;
-  background:#fafafa;
-  border:1px solid #eee;
-  transition: background 0.2s ease;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:10px 12px; border-radius:8px; margin-bottom:8px;
+  background:#ffffff; border:1px solid #efecec; box-shadow:0 4px 10px rgba(10,10,10,0.03);
 }
-.alt-item:hover { background:#f5f5f5; }
-.alt-item .alt-name { font-size:15px; font-weight:500; color:#111; }
+.alt-item .alt-name { font-size:15px; font-weight:600; color:#111; }
 .alt-item .alt-action { flex:0 0 auto; }
-.alt-item .alt-action button {
-  padding:6px 12px;
-  border-radius:6px;
-  font-size:14px;
-}
+.alt-item .alt-action button { min-width:110px; padding:8px 12px; border-radius:8px; font-size:14px; }
 
 /* Footer */
-.footer {
-  margin:30px 0;
-  padding:18px 0;
-  border-top:1px solid #f0eee9;
-  color:var(--muted); font-size:13px;
-}
-.no-margin { margin:0; }
+.footer { margin:30px 0; padding:18px 0; border-top:1px solid #f0eee9; color:var(--muted); font-size:13px; }
 
 /* Responsive */
 @media(max-width:640px) {

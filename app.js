@@ -99,10 +99,11 @@ function renderResults(results) {
     if (item.Alternative2) alts.push(item.Alternative2);
     if (item.Alternative3) alts.push(item.Alternative3);
 
-    // stacked alternative rows
+    // Build alternatives block with heading
     let altHtml = '';
     if (alts.length) {
-      altHtml = '<div class="alt-list" style="margin-top:10px">';
+      altHtml = '<div class="alt-list">';
+      altHtml += '<div style="margin-bottom:8px;font-weight:700;color:#333">Alternatives:</div>';
       alts.forEach((a) => {
         const safeA = escapeJS(a);
         altHtml += `
@@ -120,13 +121,11 @@ function renderResults(results) {
 
     const isIndian = (country || '').toString().toLowerCase().includes('india');
     const badgeHtml = isIndian
-  ? '<span class="flag-badge indian">Indian</span>'
-  : '<span class="flag-badge foreign">Foreign</span>';
-
+      ? '<span class="flag-badge indian">Indian</span>'
+      : '<span class="flag-badge foreign">Foreign</span>';
 
     const safeName = escapeJS(name);
     const safeCountry = escapeJS(country);
-
     const imgHtml = imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(name)}" class="product-thumb">` : '';
 
     const html = `
@@ -140,7 +139,7 @@ function renderResults(results) {
                 ${badgeHtml}
                 <button class="btn btn-ghost small-btn" style="margin-left:6px;" onclick="addToBasketFromResult('${safeName}', '${safeCountry}')">Add</button>
               </div>
-              <div class="small" style="margin-top:6px;"><strong>Brand:</strong> ${escapeHtml(brand)} &nbsp; <strong>Parent:</strong> ${escapeHtml(parent)} — ${escapeHtml(country)}</div>
+              <div class="small" style="margin-top:8px;"><strong>Brand:</strong> ${escapeHtml(brand)} &nbsp; <strong>Parent:</strong> ${escapeHtml(parent)} — ${escapeHtml(country)}</div>
             </div>
           </div>
 
