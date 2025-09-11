@@ -383,10 +383,11 @@ function showOnboardingTooltip() {
 }
 
 window.addEventListener('DOMContentLoaded', function(){
-  // Show tooltip only on homepage or results page
-  if (document.getElementById('resultsList') || document.querySelector('.hero')) {
-    showOnboardingTooltip();
-  }
+  // Show tooltip only on home (index) or results page
+if (document.querySelector('.hero') || document.getElementById('resultsList')) {
+  showOnboardingTooltip();
+}
+
 });
 
 /* expose functions to window for inline onclick handlers */
