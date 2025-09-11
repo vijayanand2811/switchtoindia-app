@@ -9,17 +9,22 @@
 <body>
   <div class="wrap">
     <header>
-      <div class="logo">
+          <div class="logo">
+      <a href="basket.html" class="basket-link" aria-label="View basket">
         <div class="badge" aria-hidden>
-          <!-- shopping cart badge svg -->
+          <!-- simple cart+map icon (same as before) -->
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
             <path d="M3 3h2l1 7h13l1-5H8" stroke="#111" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
             <circle cx="10" cy="20" r="1.6" fill="#111"/>
             <circle cx="18" cy="20" r="1.6" fill="#111"/>
           </svg>
+          <!-- live count badge (hidden when 0) -->
+          <span id="basketCount" class="basket-count" aria-live="polite" aria-atomic="true" style="display:none">0</span>
         </div>
-        <h1>Switch To India</h1>
-      </div>
+      </a>
+      <h1>Switch To India</h1>
+    </div>
+
 
       <nav>
         <a href="index.html">Home</a>
