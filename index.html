@@ -86,6 +86,64 @@
 @keyframes pop { 0% { transform: scale(.9) } 50% { transform: scale(1.15) } 100% { transform: scale(1) } }
 .basket-count.pop { animation: pop 320ms ease; }
 
+/* ===== Fix for home hero mobile overflow ===== */
+@media (max-width: 760px) {
+  /* make container padding smaller to avoid edge bleed */
+  .wrap { padding-left: 12px; padding-right: 12px; }
+
+  /* ensure hero never exceeds viewport and its content wraps */
+  body.home .hero,
+  .hero {
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+    padding: 14px !important;
+    overflow: hidden !important;
+    word-break: break-word;
+  }
+
+  /* force hero children to respect the container width */
+  body.home .hero > * { max-width: 100% !important; }
+
+  /* headline smaller, wrap-friendly */
+  body.home .hero h2 {
+    font-size: 18px !important;
+    line-height: 1.08 !important;
+    white-space: normal !important;
+    word-break: break-word;
+    margin: 0 0 8px 0;
+  }
+  body.home .hero p { font-size: 14px !important; margin:0; color: var(--muted); }
+
+  /* stack the search controls vertically on small screens */
+  body.home .search {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    align-items: stretch !important;
+  }
+  body.home .search input,
+  body.home .search .btn,
+  body.home .search .btn-ghost {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  /* CTA row stacked so it doesn't push hero right */
+  body.home .cta-row { flex-direction: column; gap: 8px; align-items: flex-start; }
+
+  /* header wrap so nav doesn't force content sideways */
+  header { flex-wrap: wrap; gap: 8px; align-items: center; }
+
+  /* avoid horizontal scroll */
+  html, body { overflow-x: hidden; }
+}
+
+/* extra tiny tweak for very small phones */
+@media (max-width: 360px) {
+  body.home .hero h2 { font-size: 17px !important; }
+}
+
 </style>
 </head>
 <body class="home">
@@ -120,11 +178,12 @@
       <h2>Discover who owns the brands you buy — and switch to Indian alternatives.</h2>
       <p>Type a product, scan a barcode later, and see instant Indian alternatives. Minimal. Fast. Neutral.</p>
 
-      <div class="search" style="margin-top:8px; display:flex; gap:8px; max-width:640px;">
-  <input id="searchBoxHero" placeholder="Type a product (e.g., noodles, soap)" aria-label="Search product" style="flex:1;padding:12px;border-radius:10px;border:1px solid #eee" />
+      <div class="search" style="margin-top:8px; display:flex; gap:8px; max-width:100%;">
+  <input id="searchBoxHero" placeholder="Type a product (e.g., noodles, soap)" aria-label="Search product" style="flex:1;padding:12px;border-radius:10px;border:1px solid #eee;width:100%" />
   <button class="btn btn-primary" onclick="doSearchFromHero()" style="padding:10px 16px;">Search</button>
   <button class="btn btn-ghost" onclick="openExample()" style="padding:10px 16px;">Try Example</button>
 </div>
+
 
       <div class="cta-row" style="margin-top:6px">
         <button class="btn" style="background:#fff;border:1px solid #eee;color:var(--muted)">Download App (coming)</button>
