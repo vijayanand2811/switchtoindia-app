@@ -105,15 +105,18 @@ function renderResults(results) {
       altHtml = '<div class="alt-list">';
       altHtml += '<div style="margin-bottom:8px;font-weight:700;color:#333">Alternatives:</div>';
       alts.forEach((a) => {
-        const safeA = escapeJS(a);
-        altHtml += `
-          <div class="alt-item">
-            <div class="alt-name">${escapeHtml(a)}</div>
-            <div class="alt-action">
-              <button class="btn btn-ghost small-btn" onclick="addAlternativeToBasket('${safeA}')">Switch / Add</button>
-            </div>
-          </div>`;
-      });
+  const safeA = escapeJS(a);
+  altHtml += `
+    <div class="alt-item">
+      <div class="alt-name">
+        ${escapeHtml(a)} <span class="flag-badge indian">Indian</span>
+      </div>
+      <div class="alt-action">
+        <button class="btn btn-ghost small-btn" onclick="addAlternativeToBasket('${safeA}')">Switch / Add</button>
+      </div>
+    </div>`;
+});
+
       altHtml += '</div>';
     } else {
       altHtml = `<div style="margin-top:8px;color:#666">No alternatives listed</div>`;
