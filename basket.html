@@ -65,6 +65,8 @@
 <script>
 function clearBasket(){ localStorage.removeItem('basket'); loadBasket(); }
 function shareScore(){ const text = document.getElementById('impactText').innerText || 'My Indian score from SwitchToIndia'; if(navigator.share){ navigator.share({title:'My Indian Score', text}); } else { navigator.clipboard.writeText(text).then(()=>alert('Score copied to clipboard. Share it!')) } }
+window.addEventListener('DOMContentLoaded', function(){ loadBasket(); });
+</script>
 
 <script>
   function doSearchFromHero(){
@@ -74,9 +76,6 @@ function shareScore(){ const text = document.getElementById('impactText').innerT
   }
 
   function openExample(){ window.location.href = 'results.html?q=maggi'; }
-</script>
-  
-window.addEventListener('DOMContentLoaded', function(){ loadBasket(); });
 </script>
 </body>
 </html>
