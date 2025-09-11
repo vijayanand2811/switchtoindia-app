@@ -119,7 +119,10 @@ function renderResults(results) {
     }
 
     const isIndian = (country || '').toString().toLowerCase().includes('india');
-    const badgeHtml = isIndian ? '<span class="flag-badge">Indian</span>' : '<span class="flag-badge">Foreign</span>';
+    const badgeHtml = isIndian
+  ? '<span class="flag-badge indian">Indian</span>'
+  : '<span class="flag-badge foreign">Foreign</span>';
+
 
     const safeName = escapeJS(name);
     const safeCountry = escapeJS(country);
