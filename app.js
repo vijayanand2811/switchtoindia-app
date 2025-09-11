@@ -154,62 +154,241 @@ function renderResults(results) {
   });
 }
 
-/* ------------- Basket helpers (persistent) ------------- */
+/* ---------- Basket: grouped items, qty, price, remove/confirm ---------- */
+
 const BASKET_KEY = 'stindiabasket_v1';
 
-function addToBasketFromResult(name, country) {
-  addToBasket(name, country);
-  showToast(`${name} added to basket`);
+/*
+ Helper: read basket array from storage (array of {id,name,country,qty,price})
+ */
+function readBasket() {
+  try {
+    return JSON.parse(localStorage.getItem(BASKET_KEY) || '[]');
+  } catch (e) {
+    console.error('readBasket parse error', e);
+    return [];
+  }
 }
 
-function addToBasket(name, country) {
-  const cur = JSON.parse(localStorage.getItem(BASKET_KEY) || '[]');
-  cur.push({ name, country, addedAt: new Date().toISOString() });
-  localStorage.setItem(BASKET_KEY, JSON.stringify(cur));
-  // maintain legacy 'basket' key too
-  localStorage.setItem('basket', JSON.stringify(cur));
+/*
+ Helper: write basket
+ */
+function writeBasket(arr) {
+  localStorage.setItem(BASKET_KEY, JSON.stringify(arr));
+  // keep legacy for compatibility
+  localStorage.setItem('basket', JSON.stringify(arr));
+}
+
+/*
+ Add to basket: merges into existing item by key (name|country)
+ price is optional (number or null). qty defaults to 1.
+ */
+function addToBasket(name, country, price = null, qty = 1) {
+  const key = `${(name||'').trim()}|${(country||'').trim()}`;
+  const cur = readBasket();
+  const idx = cur.findIndex(i => i.key === key);
+  if (idx >= 0) {
+    cur[idx].qty = (cur[idx].qty || 0) + qty;
+    // if new price provided and existing price missing, set it
+    if (price != null && (!cur[idx].price || cur[idx].price === null)) cur[idx].price = Number(price);
+  } else {
+    cur.push({
+      id: Date.now() + Math.random().toString(16).slice(2,8),
+      key,
+      name,
+      country,
+      qty,
+      price: price != null ? Number(price) : null
+    });
+  }
+  writeBasket(cur);
   if (document.body.contains(document.getElementById('basketItems'))) loadBasket();
 }
 
+/*
+ Called from results Add button (prompt user for price)
+ */
+function addToBasketFromResult(name, country) {
+  // ask user for price (optional)
+  const p = prompt(`Enter price for "${name}" (leave blank if unknown):`, '');
+  let price = null;
+  if (p !== null && p.trim() !== '') {
+    const parsed = Number(p.replace(/[^0-9.]/g, ''));
+    if (!isNaN(parsed)) price = parsed;
+  }
+  addToBasket(name, country, price, 1);
+  if (typeof showToast === 'function') showToast(`${name} added to basket`);
+}
+
+/*
+ Called when user clicks "Switch / Add" on an alternative (we assume it's Indian)
+ */
+function addAlternativeToBasket(altName) {
+  // prompt for price optionally
+  const p = prompt(`Enter price for "${altName}" (leave blank if unknown):`, '');
+  let price = null;
+  if (p !== null && p.trim() !== '') {
+    const parsed = Number(p.replace(/[^0-9.]/g, ''));
+    if (!isNaN(parsed)) price = parsed;
+  }
+  addToBasket(altName, 'India', price, 1);
+  if (typeof showToast === 'function') showToast(`${altName} added to basket`);
+}
+
+/*
+ loadBasket: render basketItems div showing grouped rows with qty, +/- buttons,
+ Edit Price, Remove (with confirmation). Also calls renderImpact()
+ */
 function loadBasket() {
   const basketItemsDiv = document.getElementById('basketItems');
   if (!basketItemsDiv) return;
-  const basket = JSON.parse(localStorage.getItem(BASKET_KEY) || '[]');
-  if (basket.length === 0) {
+  const basket = readBasket();
+
+  if (!basket || basket.length === 0) {
     basketItemsDiv.innerHTML = '<div class="small">Your basket is empty. Add items from results.</div>';
-    clearChart();
+    if (typeof clearChart === 'function') clearChart(); else {
+      const impactTextEl = document.getElementById('impactText'); if (impactTextEl) impactTextEl.innerText = '';
+    }
     return;
   }
-  basketItemsDiv.innerHTML = basket.map(i => {
-  const isIndian = (i.country || '').toLowerCase().includes('india');
-  const badge = isIndian
-    ? '<span class="flag-badge indian">Indian</span>'
-    : '<span class="flag-badge foreign">Foreign</span>';
 
-  return `
-    <div style="padding:6px 0; display:flex; align-items:center; gap:8px;">
-      <strong>${escapeHtml(i.name)}</strong> 
-      ${badge}
-      <span class="small">(${escapeHtml(i.country||'')})</span>
-    </div>`;
-}).join('');
+  // build rows
+  const html = basket.map((item, index) => {
+    const isIndian = (item.country || '').toLowerCase().includes('india');
+    const badge = isIndian
+      ? '<span class="flag-badge indian" aria-label="Indian owned brand">Indian</span>'
+      : '<span class="flag-badge foreign" aria-label="Foreign owned brand">Foreign</span>';
+    const priceText = item.price != null ? `₹ ${Number(item.price).toFixed(2)}` : 'Price: N/A';
+    return `
+      <div class="basket-row card" data-index="${index}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;padding:10px;">
+        <div style="display:flex;align-items:center;gap:12px;flex:1;">
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <strong>${escapeHtml(item.name)}</strong>
+              ${badge}
+              <span class="small" style="margin-left:6px;color:#666">(${escapeHtml(item.country||'')})</span>
+            </div>
+            <div class="small" style="margin-top:6px;color:#666">${priceText}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button class="btn btn-ghost small-btn" onclick="updateQuantity(${index},-1)">−</button>
+            <div style="min-width:36px;text-align:center;font-weight:600">${item.qty}</div>
+            <button class="btn btn-ghost small-btn" onclick="updateQuantity(${index},1)">+</button>
+          </div>
+        </div>
 
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+          <button class="btn btn-ghost small-btn" onclick="editPrice(${index})">Edit Price</button>
+          <button class="btn btn-ghost" onclick="removeItem(${index})">Remove</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  basketItemsDiv.innerHTML = html;
   renderImpact(basket);
 }
 
-function clearBasket() {
-  localStorage.removeItem('stindiabasket_v1');  // clear new key
-  localStorage.removeItem('basket');           // clear legacy key
-  loadBasket(); // reload basket UI (will show empty message + clear chart)
-  showToast("Basket cleared");
+/*
+ update quantity by delta (positive or negative)
+ if qty drops to 0, confirm remove.
+ */
+function updateQuantity(index, delta) {
+  const cur = readBasket();
+  if (!cur[index]) return;
+  cur[index].qty = (cur[index].qty || 0) + delta;
+  if (cur[index].qty <= 0) {
+    const ok = confirm(`Remove "${cur[index].name}" from basket?`);
+    if (!ok) {
+      // restore to 1
+      cur[index].qty = 1;
+    } else {
+      cur.splice(index,1);
+    }
+  }
+  writeBasket(cur);
+  loadBasket();
+  if (typeof showToast === 'function') showToast('Basket updated');
 }
 
-
-/* add alternative (assumed Indian) */
-function addAlternativeToBasket(altName) {
-  addToBasket(altName, 'India');
-  showToast(`${altName} added to basket (Indian alternative)`);
+/*
+ edit price for an item: prompt user
+ */
+function editPrice(index) {
+  const cur = readBasket();
+  if (!cur[index]) return;
+  const current = cur[index].price != null ? cur[index].price : '';
+  const p = prompt(`Enter price for "${cur[index].name}":`, current);
+  if (p === null) return; // canceled
+  if (p.trim() === '') {
+    cur[index].price = null;
+  } else {
+    const parsed = Number(p.replace(/[^0-9.]/g,''));
+    if (!isNaN(parsed)) cur[index].price = parsed;
+    else { alert('Invalid number'); return; }
+  }
+  writeBasket(cur);
+  loadBasket();
+  if (typeof showToast === 'function') showToast('Price updated');
 }
+
+/*
+ remove item with confirmation
+ */
+function removeItem(index) {
+  const cur = readBasket();
+  if (!cur[index]) return;
+  const ok = confirm(`Remove "${cur[index].name}" from basket?`);
+  if (!ok) return;
+  cur.splice(index,1);
+  writeBasket(cur);
+  loadBasket();
+  if (typeof showToast === 'function') showToast('Item removed');
+}
+
+/*
+ renderImpact now calculates monetary totals (uses price * qty where available)
+ and shows counts as before.
+ */
+let chartInstance = null;
+function renderImpact(basket) {
+  // counts
+  const indianCount = basket.filter(i => (i.country||'').toLowerCase().includes('india')).reduce((s,i)=>s+i.qty,0);
+  const foreignCount = basket.reduce((s,i)=>s + (i.qty || 0),0) - indianCount;
+  const totalCount = indianCount + foreignCount;
+  const indianPct = totalCount === 0 ? 0 : Math.round((indianCount/totalCount)*10000)/100;
+
+  // monetary totals (only where price defined)
+  let indianAmount = 0, foreignAmount = 0;
+  basket.forEach(i => {
+    const val = (i.price != null && !isNaN(i.price)) ? (Number(i.price) * (i.qty||1)) : 0;
+    if ((i.country||'').toLowerCase().includes('india')) indianAmount += val;
+    else foreignAmount += val;
+  });
+  const totalAmount = indianAmount + foreignAmount;
+
+  const impactTextEl = document.getElementById('impactText');
+  if (impactTextEl) {
+    const cntText = totalCount ? `Indian: ${indianCount} (${indianPct}%) — Foreign: ${foreignCount} (${Math.round(100 - indianPct)}%)` : '';
+    const amtText = totalAmount ? `Total ₹${totalAmount.toFixed(2)} — India ₹${indianAmount.toFixed(2)}, Foreign ₹${foreignAmount.toFixed(2)}` : '';
+    impactTextEl.innerText = [cntText, amtText].filter(Boolean).join(' — ');
+  }
+
+  // pie chart (uses counts)
+  const ctx = document.getElementById('pieChart')?.getContext('2d');
+  if (!ctx) return;
+  if (chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: ['Indian', 'Foreign'],
+      datasets: [{ data: [indianCount, foreignCount], backgroundColor: ['#138808', '#FF9933'] }]
+    },
+    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
+  });
+}
+
+/* end of basket block */
 
 /* ------------- Pie / Impact chart (Chart.js required on basket page) ------------- */
 let chartInstance = null;

@@ -194,3 +194,8 @@ nav a { color:var(--muted); text-decoration:none; margin-left:14px; font-size:14
   .alt-item .alt-name { font-size:14px; }
   #pieChart { max-width:130px; max-height:130px; }
 }
+
+/* Basket controls */
+.basket-row { }
+.basket-row .btn-ghost.small-btn { min-width:36px; padding:6px 8px; }
+.basket-row .card { box-shadow: 0 8px 22px rgba(10,10,10,0.03); border-radius:10px; }
