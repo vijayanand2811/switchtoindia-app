@@ -99,13 +99,11 @@ function renderResults(results) {
     const country = item.ParentCountry || 'Unknown';
     const imageUrl = item.ImageURL || '';
 
-    // Alternatives array
     const alts = [];
     if (item.Alternative1) alts.push(item.Alternative1);
     if (item.Alternative2) alts.push(item.Alternative2);
     if (item.Alternative3) alts.push(item.Alternative3);
 
-    // Build alternatives HTML — each alternative has a "Switch/Add" button
     let altHtml = '';
     if (alts.length) {
       altHtml = '<div style="margin-top:8px"><strong>Alternatives:</strong><div style="margin-top:6px">';
@@ -127,30 +125,22 @@ function renderResults(results) {
     const safeName = escapeJS(name);
     const safeCountry = escapeJS(country);
 
-    // Put badge and Add button inside the left column header (next to title)
     const imgHtml = imageUrl ? `<img src="${imageUrl}" alt="${escapeHtml(name)}" class="product-thumb">` : '';
 
     const html = `
       <div class="result-row" style="margin-bottom:10px;">
         <div class="result-left">
-          <div style="display:flex;align-items:center;gap:12px;justify-content:space-between;">
-            <div style="display:flex;align-items:center;gap:12px;flex:1;">
-              ${imgHtml}
-              <div>
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <h3 style="margin:0;">${escapeHtml(name)}</h3>
-                  <div style="display:inline-block;margin-left:6px;">${badgeHtml}</div>
-                </div>
-                <div class="small" style="margin-top:6px;"><strong>Brand:</strong> ${escapeHtml(brand)} &nbsp; <strong>Parent:</strong> ${escapeHtml(parent)} — ${escapeHtml(country)}</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            ${imgHtml}
+            <div>
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <h3 style="margin:0;">${escapeHtml(name)}</h3>
+                ${badgeHtml}
+                <button class="btn btn-ghost small-btn" style="padding:6px 10px;border-radius:8px" onclick="addToBasketFromResult('${safeName}', '${safeCountry}')">Add</button>
               </div>
-            </div>
-
-            <!-- Add button for the main product placed to the right of the header (but visually close) -->
-            <div style="margin-left:12px;display:flex;flex-direction:column;align-items:flex-end;gap:8px">
-              <button class="btn btn-ghost small-btn" style="padding:6px 10px;border-radius:8px" onclick="addToBasketFromResult('${safeName}', '${safeCountry}')">Add</button>
+              <div class="small" style="margin-top:6px;"><strong>Brand:</strong> ${escapeHtml(brand)} &nbsp; <strong>Parent:</strong> ${escapeHtml(parent)} — ${escapeHtml(country)}</div>
             </div>
           </div>
-
           ${altHtml}
         </div>
       </div>
