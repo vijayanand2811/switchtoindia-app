@@ -1,0 +1,24 @@
+ProductName,ParentCompany,ParentCountry,Category,Subcategory,Attributes,Ownership,FSSAI_Licensed,FSSAI_Number
+Sprite,Coca-Cola,Switzerland,Soft Drink,CarbonatedSoda,"carbonated,lemon-lime",Foreign,,
+Coca-Cola,Coca-Cola,Switzerland,Soft Drink,CarbonatedSoda,"carbonated,cola",Foreign,,
+Fanta,Coca-Cola,Switzerland,Soft Drink,CarbonatedSoda,"carbonated,orange",Foreign,,
+Pepsi,PepsiCo,USA,Soft Drink,CarbonatedSoda,"carbonated,cola",Foreign,,
+Thumbs Up,Coca-Cola India,India,Soft Drink,CarbonatedSoda,"carbonated,cola",Indian,Yes,10012022000001
+Maaza,Coca-Cola India,India,Soft Drink,JuiceDrink,"mango,non-carbonated",Indian,Yes,10012022000002
+Frooti,Parle Agro,India,Soft Drink,JuiceDrink,"mango,non-carbonated",Indian,Yes,10012022000003
+Appy Fizz,Parle Agro,India,Soft Drink,CarbonatedJuice,"apple,carbonated",Indian,Yes,10012022000004
+Maggi,Nestlé,Switzerland,Packaged Food,InstantNoodles,"noodles,instant",Foreign,,
+Yippee!,ITC,India,Packaged Food,InstantNoodles,"noodles,instant",Indian,Yes,10012022000005
+Top Ramen,Nissin,Japan,Packaged Food,InstantNoodles,"noodles,instant",Foreign,,
+Ching's Secret,Capital Foods,India,Packaged Food,InstantNoodles,"noodles,instant",Indian,Yes,10012022000006
+Lays,PepsiCo,USA,Snacks,Chips,"potato,chips,salted",Foreign,,
+Pringles,Kellogg's,USA,Snacks,Chips,"potato,chips,stack",Foreign,,
+Doritos,PepsiCo,USA,Snacks,Chips,"nachos,flavored",Foreign,,
+Balaji Wafers,Balaji Wafers,India,Snacks,Chips,"potato,chips,indian",Indian,Yes,10012022000007
+Bikaji Chips,Bikaji Foods,India,Snacks,Chips,"potato,chips,indian",Indian,Yes,10012022000008
+Haldiram’s Chips,Haldiram’s,India,Snacks,Chips,"potato,chips,indian",Indian,Yes,10012022000009
+Colgate,Colgate-Palmolive,USA,FMCG,Toothpaste,"fluoride,mint",Foreign,,
+Pepsodent,Unilever,UK/Netherlands,FMCG,Toothpaste,"fluoride,mint",Foreign,,
+Sensodyne,GSK,UK,FMCG,Toothpaste,sensitive,Foreign,,
+Dabur Red Paste,Dabur,India,FMCG,Toothpaste,"herbal,ayurvedic",Indian,Yes,10012022000010
+Patanjali Dant Kanti,Patanjali,India,FMCG,Toothpaste,"herbal,ayurvedic",Indian,Yes,10012022000011
