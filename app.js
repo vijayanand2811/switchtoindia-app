@@ -137,10 +137,14 @@ function renderResults(results) {
     const country = item.ParentCountry || '';
     const imageUrl = item.ImageURL || '';
 
-    const alts = [];
-    if (item.Alternative1) alts.push(item.Alternative1);
-    if (item.Alternative2) alts.push(item.Alternative2);
-    if (item.Alternative3) alts.push(item.Alternative3);
+    const rawAlts = [];
+if (item.Alternative1) rawAlts.push(item.Alternative1);
+if (item.Alternative2) rawAlts.push(item.Alternative2);
+if (item.Alternative3) rawAlts.push(item.Alternative3);
+
+// use pickAltObjects to select the best matches
+const alts = pickAltObjects(item, rawAlts);
+
 
     const isIndianParent = (country||'').toString().toLowerCase().includes('india');
     const badgeHtml = isIndianParent
@@ -150,22 +154,27 @@ function renderResults(results) {
     const imgHtml = imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(name)}" class="product-thumb">` : '';
 
     let altHtml = '';
-    if (alts.length) {
-      altHtml += '<div class="alt-list">';
-      altHtml += '<div style="margin-bottom:8px;font-weight:700;color:#333">Alternatives:</div>';
-      alts.forEach(a => {
-        const safeA = escapeJS(a);
-        // assume alternatives are Indian — show green badge next to them
-        altHtml += `
-          <div class="alt-item">
-            <div class="alt-name">${escapeHtml(a)} <span class="flag-badge indian" aria-label="Indian owned brand">Indian</span></div>
-            <div class="alt-action">
-              <button class="btn btn-ghost small-btn" onclick="addAlternativeToBasket('${safeA}')">Switch / Add</button>
-            </div>
-          </div>`;
-      });
-      altHtml += '</div>';
-    }
+    alts.forEach(altObj => {
+  if (!altObj) return;
+  const altName = altObj.ProductName || '';
+  const altCountry = altObj.ParentCountry || '';
+  const safeA = escapeJS(altName);
+
+  const isIndian = (altObj.Ownership || '').toLowerCase().includes('india') ||
+                   (altCountry || '').toLowerCase().includes('india');
+  const badge = isIndian
+    ? '<span class="flag-badge indian" aria-label="Indian owned brand">Indian</span>'
+    : '<span class="flag-badge foreign" aria-label="Foreign owned brand">Foreign</span>';
+
+  altHtml += `
+    <div class="alt-item">
+      <div class="alt-name">${escapeHtml(altName)} ${badge}</div>
+      <div class="alt-action">
+        <button class="btn btn-ghost small-btn" onclick="addAlternativeToBasket('${safeA}')">Switch / Add</button>
+      </div>
+    </div>`;
+});
+
 
     const safeName = escapeJS(name);
     const safeCountry = escapeJS(country);
