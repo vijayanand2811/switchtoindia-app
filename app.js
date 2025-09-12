@@ -80,6 +80,41 @@ async function searchAndShow(q) {
   }
 }
 
+// place before renderResults or inside it where alternatives are built
+function pickAltObjects(item, rawAltNames) {
+  const normalize = s => (s||'').toString().toLowerCase().trim();
+  const itemCat = normalize(item.Category);
+  const itemSub = normalize(item.Subcategory);
+  // build map once
+  window._prodMap = window._prodMap || (_productsCache||[]).reduce((m,p)=>{
+    m[(p.ProductName||'').toString().toLowerCase()] = p; return m;
+  }, {});
+  const candidates = rawAltNames.map(n => window._prodMap[normalize(n)]).filter(Boolean);
+  const scored = candidates.map(alt => {
+    const cat = normalize(alt.Category);
+    const sub = normalize(alt.Subcategory);
+    const isIndian = (alt.Ownership||'').toString().toLowerCase().includes('india') || (alt.ParentCountry||'').toString().toLowerCase().includes('india');
+    const fssai = !!alt.FSSAI_Licensed;
+    let score = 0;
+    if (cat && itemCat && cat===itemCat) score += 50;
+    if (sub && itemSub && sub===itemSub) score += 200;
+    // attribute overlap small boost (if Attributes present)
+    const a = (item.Attributes||'').toLowerCase();
+    const b = (alt.Attributes||'').toLowerCase();
+    if (a && b) {
+      const as = a.split(',').map(x=>x.trim());
+      const bs = b.split(',').map(x=>x.trim());
+      if (as.some(x=>bs.includes(x))) score += 25;
+    }
+    if (isIndian) score += 30;
+    if (fssai) score += 10;
+    return {alt, score};
+  });
+  scored.sort((x,y)=>y.score - x.score);
+  return scored.map(s=>s.alt).slice(0,3);
+}
+
+
 /* renderResults: displays product card + stacked alternatives */
 function renderResults(results) {
   const container = document.getElementById('resultsList');
