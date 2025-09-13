@@ -375,3 +375,43 @@ nav a { color:var(--muted); text-decoration:none; margin-left:14px; font-size:14
 @media (max-width: 360px) {
   body.home .hero h2 { font-size: 17px !important; }
 }
+
+/* product meta (brand, parent, category) */
+.product-meta {
+  margin-top: 8px;
+  color: #666;
+  font-size: 13px;
+}
+
+/* alternatives list layout */
+.alt-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.alt-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #fafafa;
+}
+.alt-name {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  word-break: break-word;
+}
+.alt-action {
+  flex: 0 0 auto;
+  margin-left: 8px;
+}
+.small-btn {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
