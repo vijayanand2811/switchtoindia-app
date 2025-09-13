@@ -1,417 +1,183 @@
-/* -----------------------
-   SwitchToIndia - final style.css
-   Includes badge colors + stacked alternatives + button spacing
-   ----------------------- */
-
-:root {
+:root{
   --saffron:#FF9933;
   --green:#138808;
-  --red:#d9534f;
   --muted:#666;
   --card:#fff;
   --bg:#faf8f6;
   --accent:#ff7a00;
   --radius:12px;
-  --max-w:920px;
+  --max-w:840px;
+  --shadow-1: 0 6px 18px rgba(0,0,0,0.06);
+  --shadow-2: 0 10px 30px rgba(12,12,12,0.04);
 }
 
-/* Pie size */
-#pieChart { max-width:160px; max-height:160px; }
-
-/* Base */
-* { box-sizing:border-box; }
-body {
-  font-family: Inter, system-ui, Arial, sans-serif;
+/* Reset / base */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   margin:0;
-  background: linear-gradient(180deg,#fff,#fbf9f7);
+  background:linear-gradient(180deg,#fff,#fbf9f7);
   color:#111;
-  -webkit-font-smoothing: antialiased;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  line-height:1.35;
 }
-.wrap { max-width:var(--max-w); margin:0 auto; padding:20px; }
+.wrap{
+  max-width:var(--max-w);
+  margin:0 auto;
+  padding:20px;
+}
 
 /* Header */
-header { display:flex; align-items:center; justify-content:space-between; padding:6px 0; }
-.logo { display:flex; align-items:center; gap:10px; }
-.logo .badge {
-  width:44px; height:44px; border-radius:50%;
-  background: linear-gradient(135deg,var(--saffron),#fff 50%,var(--green));
-  display:grid; place-items:center; box-shadow:0 6px 18px rgba(0,0,0,0.06);
+header{display:flex;align-items:center;justify-content:space-between;padding:6px 0}
+.logo{display:flex;align-items:center;gap:12px}
+.logo .badge{
+  width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(135deg,var(--saffron),#fff 50%,var(--green));
+  display:grid;place-items:center;box-shadow:var(--shadow-1);
 }
-.logo h1 { font-size:20px; margin:0; font-weight:700; }
-nav a { color:var(--muted); text-decoration:none; margin-left:14px; font-size:14px; }
+.logo h1{font-size:20px;margin:0;font-weight:700}
+nav a{color:var(--muted);text-decoration:none;margin-left:14px;font-size:14px}
 
 /* Hero */
-/* Keep hero sections visually consistent height across pages */
-.hero {
-  min-height: 160px;   /* adjust as needed */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.hero {
-  background: linear-gradient(90deg, rgba(255,160,80,0.06), rgba(19,136,8,0.02));
+.hero{
+  background:linear-gradient(90deg, rgba(255,160,80,0.06), rgba(19,136,8,0.02));
   border-radius:var(--radius);
   padding:22px;
   margin:18px 0;
-  display:grid; gap:14px;
+  display:grid;
+  gap:14px;
+  box-shadow: var(--shadow-1);
 }
-.hero h2 { font-size:22px; margin:0; }
-.hero p { margin:0; color:var(--muted); font-size:15px; }
+.hero h2{font-size:22px;margin:0}
+.hero p{margin:0;color:var(--muted);font-size:15px}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap}
 
 /* Buttons */
-.btn { padding:11px 16px; border-radius:10px; border:0; font-weight:600; cursor:pointer; }
-.btn-primary { background:var(--accent); color:#fff; box-shadow:0 6px 18px rgba(255,122,0,0.18); }
-.btn-ghost { background:transparent; border:1px solid #eee; color:var(--muted); }
-.btn-ghost.small-btn { padding:6px 10px; }
-.small-btn { font-size:14px; }
+.btn{
+  padding:11px 16px;border-radius:10px;border:0;font-weight:600;cursor:pointer;
+  background:transparent;color:inherit;
+}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(255,122,0,0.18)}
+.btn-ghost{background:transparent;border:1px solid #eee;color:var(--muted)}
+.small-btn{padding:8px 12px;font-size:13px;border-radius:8px}
 
-/* Inputs */
-.search input, .search-input {
-  flex:1; padding:12px; border-radius:10px; border:1px solid #eee; font-size:15px;
+/* Search */
+.search{display:flex;gap:8px;align-items:center}
+.search input{flex:1;padding:12px;border-radius:10px;border:1px solid #eee;font-size:15px}
+
+/* Cards / Grid */
+.grid{display:grid;grid-template-columns:repeat(1,1fr);gap:12px;margin-top:12px}
+@media(min-width:760px){ .grid{grid-template-columns:repeat(3,1fr)} .hero h2{font-size:28px} }
+.card{background:var(--card);padding:14px;border-radius:12px;box-shadow:var(--shadow-2)}
+.card h4{margin:0 0 8px 0;font-size:16px}
+.card p{margin:0;color:var(--muted);font-size:14px}
+
+/* Example / impact */
+.example{margin:18px 0}
+.example .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.example .left{flex:1}
+.flag-badge{font-size:12px;padding:6px 10px;border-radius:999px;background:#f2f2f2;color:#333;display:inline-block}
+
+/* Impact pie */
+.impact{display:flex;gap:14px;align-items:center;padding:12px;border-radius:12px;background:linear-gradient(180deg,#fff,#fff);box-shadow:0 10px 20px rgba(12,12,12,0.03)}
+.pie{width:110px;height:110px;border-radius:999px;background:conic-gradient(var(--green) 0 62%, var(--saffron) 62% 100%);display:grid;place-items:center;color:#fff;font-weight:700}
+.impact .meta{font-size:14px;color:var(--muted)}
+
+/* Results / product list */
+.result-row{margin-bottom:12px}
+.result-left{display:block}
+.result-left img.product-thumb{width:64px;height:64px;border-radius:8px;object-fit:cover}
+
+/* Alternatives list */
+.alt-list{margin-top:12px}
+.alt-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px;border-radius:10px;background:#fff;border:1px solid #f0f0f0;margin-bottom:8px;
+}
+.alt-item .alt-name{font-weight:500;color:#222}
+.alt-action{flex:0 0 110px; text-align:right}
+
+/* Basket UI */
+.basket-row{margin-bottom:8px}
+
+/* Badges (Indian / Foreign) */
+.flag-badge.indian{background:var(--green);color:#fff;padding:6px 10px;border-radius:999px;display:inline-block}
+.flag-badge.foreign{background:#d9534f;color:#fff;padding:6px 10px;border-radius:999px;display:inline-block}
+
+/* Small text helper */
+.small{font-size:13px;color:var(--muted)}
+
+/* Header basket count */
+.badge { position: relative; display:inline-block; }
+.basket-count {
+  position: absolute;
+  top:-6px; right:-8px;
+  background:#d9534f;color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;line-height:1;
+  box-shadow:0 4px 10px rgba(0,0,0,0.12);min-width:20px;text-align:center;pointer-events:none;display:none;
 }
 
-/* Cards/layout */
-.grid { display:grid; grid-template-columns:repeat(1,1fr); gap:12px; margin-top:12px; }
-@media(min-width:760px) { .grid { grid-template-columns:repeat(3,1fr); } .hero h2 { font-size:28px } }
-.card { background:var(--card); padding:14px; border-radius:12px; box-shadow:0 10px 30px rgba(12,12,12,0.04); margin-bottom:12px; }
-.small { font-size:13px; color:var(--muted); }
-
-/* Results */
-.result-row {
-  display:flex; gap:12px; align-items:flex-start;
-  padding:12px; border-radius:10px; border:1px solid #f0eee9; background:#fff;
-}
-.result-left { flex:1; }
-.result-left h3 { margin:0; font-size:16px; }
-
-/* Badges - colored */
-.flag-badge {
-  padding:6px 10px; border-radius:999px; font-weight:700; font-size:13px; color:#fff; display:inline-block;
-}
-.flag-badge.indian { background:var(--green); }
-.flag-badge.foreign { background:var(--red); }
-
-/* Add button near product title */
-.result-left .btn-ghost.small-btn {
-  margin-left:8px; padding:6px 10px; border-radius:8px; height:34px;
-}
-
-/* Thumbnail */
-.product-thumb { width:56px; height:56px; object-fit:cover; border-radius:8px; border:1px solid #eee; }
-
-/* Alternatives list + heading */
-.alt-list { margin-top:12px; display:block; }
-.alt-list > div:first-child { margin-bottom:10px; color:#333; font-weight:700; font-size:14px; }
-.alt-item {
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
-  padding:10px 12px; border-radius:8px; margin-bottom:8px;
-  background:#ffffff; border:1px solid #efecec; box-shadow:0 4px 10px rgba(10,10,10,0.03);
-}
-.alt-item .alt-name { font-size:15px; font-weight:600; color:#111; }
-.alt-item .alt-action { flex:0 0 auto; }
-.alt-item .alt-action button { min-width:110px; padding:8px 12px; border-radius:8px; font-size:14px; }
-
-/* ---------- Minimal fixes to enable colored badges + closer buttons ---------- */
-
-/* Ensure Indian / Foreign badge color classes render visibly */
-.flag-badge.indian {
-  background: #138808 !important;  /* green */
-  color: #fff !important;
-  border: 0 !important;
-}
-.flag-badge.foreign {
-  background: #d9534f !important;  /* red */
-  color: #fff !important;
-  border: 0 !important;
-}
-
-/* Style for the "Alternatives:" heading (already injected by JS) */
-.alt-list > div:first-child {
-  margin-bottom: 8px;
-  font-weight: 700;
-  color: #333;
-  font-size: 14px;
-}
-
-/* Make each alternative row keep text and button close together.
-   Previously the button was pushed to the far-right with space-between.
-   Using flex-start keeps the button next to the name; the small margin-left
-   on .alt-action keeps a tidy gap. */
-.alt-item {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start; /* keep button next to the name */
-  gap: 12px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  margin-bottom: 8px;
-  background: #ffffff;
-  border: 1px solid #efecec;
-  box-shadow: 0 4px 10px rgba(10,10,10,0.02);
-}
-
-.alt-item .alt-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: #111;
-}
-
-/* Push the action slightly right while keeping it visually connected */
-.alt-item .alt-action {
-  margin-left: 10px; /* small gap separating name and button */
-  flex: 0 0 auto;
-}
-
-/* Keep a consistent button size */
-.alt-item .alt-action button {
-  min-width: 110px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 14px;
-}
-
-/* Ensure main product badge and Add button spacing */
-.result-left h3 { margin: 0; }
-.result-left .flag-badge { margin-left: 8px; vertical-align: middle; }
-.result-left .btn-ghost.small-btn { margin-left: 10px; height: 34px; align-self: center; }
-
-/* Mobile fallback: stack alternative items on small screens */
-@media (max-width: 640px) {
-  .alt-item { flex-direction: column; align-items: stretch; gap: 8px; }
-  .alt-item .alt-action { margin-left: 0; display:flex; justify-content:flex-end; }
-  .alt-item .alt-action button { width:100%; min-width: unset; }
-}
+/* Tooltip (on-boarding) */
+.tooltip-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:9999}
+.tooltip-box{background:#fff;border-radius:12px;padding:20px;max-width:360px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,0.25)}
+.tooltip-badges{display:flex;justify-content:center;gap:12px;margin:12px 0}
 
 /* Footer */
-.footer { margin:30px 0; padding:18px 0; border-top:1px solid #f0eee9; color:var(--muted); font-size:13px; }
+footer{margin:30px 0;padding:18px 0;border-top:1px solid #f0eee9;color:var(--muted);font-size:13px}
 
-/* Responsive */
-@media(max-width:640px) {
-  .result-row { flex-direction:column; }
-  .product-thumb { width:48px; height:48px; }
-  .alt-item { padding:8px; }
-  .alt-item .alt-name { font-size:14px; }
-  #pieChart { max-width:130px; max-height:130px; }
-}
+/* Utility */
+.hidden{display:none!important}
 
-/* Basket controls */
-.basket-row { }
-.basket-row .btn-ghost.small-btn { min-width:36px; padding:6px 8px; }
-.basket-row .card { box-shadow: 0 8px 22px rgba(10,10,10,0.03); border-radius:10px; }
+/* ========== Responsive fixes ========== */
 
-/* --- Onboarding tooltip --- */
-.tooltip-overlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-.tooltip-box {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  max-width: 320px;
-  text-align: center;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-  animation: fadeInUp 0.3s ease;
-}
-
-.tooltip-box h3 {
-  margin-top: 0;
-  margin-bottom: 12px;
-  font-size: 1.2rem;
-}
-
-.tooltip-badges {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin: 12px 0;
-}
-
-.tooltip-badges .flag-badge {
-  padding: 6px 10px;
-  font-size: 0.9rem;
-  border-radius: 6px;
-}
-
-.tooltip-box button {
-  margin-top: 14px;
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ---------- Mobile-friendly adjustments (paste at end of style.css) ---------- */
-
-/* general small-screen container adjustments */
+/* Avoid horizontal scroll & make hero behave on small screens */
 @media (max-width: 760px) {
-  :root { --max-w: 760px; } /* keep same container but reduce padding below */
-  .wrap { padding: 14px; }
+  .wrap { padding-left: 12px; padding-right: 12px; }
 
-  /* Header / nav */
-  header { padding: 8px 0; align-items: center; gap: 10px; }
-  .logo h1 { font-size: 18px; margin-left: 6px; }
-  nav { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
-  nav a { font-size: 14px; margin-left: 8px; }
-
-  /* ensure basket icon + count not overlapping */
-  .badge { width:44px; height:44px; display:inline-grid; place-items:center; }
-  .basket-count { top: -6px; right: -6px; min-width:18px; font-size:11px; }
-
-  /* Hero sizing + text */
-  .hero { padding: 16px; gap: 10px; border-radius: 12px; }
-  .hero h2 { font-size: 18px; line-height: 1.15; margin: 0; }
-  .hero p { font-size: 14px; color: var(--muted); margin: 0; }
-
-  /* Search row: stack on small screens to avoid overflow */
-  .search { flex-direction: column; gap: 8px; align-items: stretch; width:100%; max-width:100% !important; }
-  .search input { width:100%; padding:12px; font-size:15px; }
-  .search button { width: auto; min-width: 84px; align-self:flex-start; }
-
-  /* CTA row stack */
-  .cta-row { flex-direction: column; align-items: flex-start; gap: 8px; }
-
-  /* cards/layout */
-  .card { padding: 12px; border-radius: 12px; }
-  .grid { gap: 12px; grid-template-columns: 1fr; }
-
-  /* Results: force vertical stacking of left area and actions */
-  .result-row .result-left, .basket-row { flex-direction: column !important; align-items: stretch !important; }
-  .result-row .result-left > div[style], .basket-row > div:first-child { width:100%; min-width:0; }
-  .result-row .alt-list .alt-item { display:block; padding:8px 0; border-top:1px solid #f4f3f2; }
-  .alt-name { display:block; margin-bottom:6px; font-weight:600; }
-
-  /* product thumbnail smaller */
-  .product-thumb { width:56px; height:56px; object-fit:cover; border-radius:8px; flex-shrink:0; }
-
-  /* Buttons & controls: bigger hit targets */
-  .btn { padding:10px 12px; font-size:15px; }
-  .btn-ghost.small-btn, .btn.btn-ghost { min-height:40px; padding:8px 10px; border-radius:8px; }
-  .btn.btn-primary { min-height:40px; padding:10px 14px; }
-
-  /* Basket qty controls inline but with spacing */
-  .basket-row .btn-ghost.small-btn { min-width:44px; height:40px; font-size:18px; border-radius:8px; padding:6px 10px; }
-
-  /* Badge sizing so it doesn't overflow */
-  .flag-badge { padding:6px 8px; font-size:12px; }
-
-  /* pie / impact card reduce size */
-  .impact .pie { width:88px; height:88px; font-size:14px; }
-
-  /* small text tweaks */
-  .small { font-size:13px; line-height:1.3; }
-}
-
-/* Extra guard for very narrow phones */
-@media (max-width: 360px) {
-  .hero h2 { font-size:17px; }
-  .logo h1 { font-size:16px; }
-  nav { font-size:13px; }
-  .search button { min-width:72px; padding:8px 10px; }
-}
-
-/* ----- Home-only mobile fixes (paste at end of style.css) ----- */
-@media (max-width: 760px) {
-  /* Scope only to index/home page */
-  body.home .hero {
-    padding: 14px;
-    gap: 8px;
-  }
-
-  /* Reduce the headline so it doesn't overflow on phones */
-  body.home .hero h2 {
-    font-size: 18px !important;
-    line-height: 1.12 !important;
-    margin: 0;
+  body.home .hero,
+  .hero {
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+    padding: 14px !important;
+    overflow: hidden !important;
     word-break: break-word;
-    hyphens: auto;
   }
+  body.home .hero > * { max-width: 100% !important; }
 
-  /* Slightly reduce hero paragraph text so the block fits better */
-  body.home .hero p {
-    font-size: 13.5px;
-    margin: 0;
-  }
+  body.home .hero h2 { font-size: 18px !important; line-height: 1.08 !important; white-space: normal !important; word-break: break-word; margin: 0 0 8px 0; }
+  body.home .hero p { font-size: 14px !important; margin:0; color: var(--muted); }
 
-  /* Make search input full width and stack buttons vertically for narrow screens */
-  body.home .search {
-    flex-direction: column;
-    gap: 8px;
-    align-items: stretch;
-  }
-  body.home .search input {
-    width: 100%;
-    padding: 12px;
-    font-size: 15px;
-  }
-  body.home .search .btn-primary,
-  body.home .search .btn-ghost {
-    width: auto;
-    align-self: flex-start;
-    min-width: 84px;
-  }
+  /* stack the search controls vertically on small screens */
+  body.home .search { display:flex !important; flex-direction:column !important; gap:10px !important; align-items:stretch !important; }
+  body.home .search input, body.home .search .btn, body.home .search .btn-ghost { max-width:100% !important; min-width:0 !important; width:100% !important; }
 
-  /* Reduce hero rounded box inner spacing so nothing spills horizontally */
-  body.home .hero { max-width: 100%; box-sizing: border-box; overflow: hidden; }
+  /* CTA row stacked */
+  body.home .cta-row { flex-direction: column; gap:8px; align-items:flex-start; }
 
-  /* Ensure header/nav stays on one line or wraps cleanly */
-  body.home header { gap: 8px; }
-  body.home nav { gap: 8px; white-space: nowrap; }
+  /* header wrap so nav doesn't push content sideways */
+  header { flex-wrap: wrap; gap:8px; align-items:center; }
 
-  /* Minor tweak: reduce CTA spacing on home */
-  body.home .cta-row { gap: 8px; flex-direction: column; align-items: flex-start; }
+  html, body { overflow-x: hidden; }
+
+  /* Make result rows and alt-items friendlier on mobile */
+  .alt-item { flex-direction: row; align-items:center; gap:10px; }
+  .alt-item .alt-action { margin-left: 8px; }
+  .alt-item .alt-action button { width:auto; min-width:90px; font-size:13px; padding:6px 10px; }
 }
 
-/* For very narrow devices, tighten headline slightly more */
+/* Extra tiny phones */
 @media (max-width: 360px) {
   body.home .hero h2 { font-size: 17px !important; }
+  .logo h1 { font-size:18px }
+  .alt-item .alt-action button { min-width:82px; padding:6px 8px; font-size:12px; }
 }
 
-/* product meta (brand, parent, category) */
-.product-meta {
-  margin-top: 8px;
-  color: #666;
-  font-size: 13px;
+/* Desktop spacing niceties */
+@media (min-width: 761px) {
+  .wrap { padding-left:24px; padding-right:24px; }
+  .alt-item .alt-action button { min-width:110px; }
 }
-
-/* alternatives list layout */
-.alt-list {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.alt-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  border-radius: 10px;
-  background: #fafafa;
-}
-.alt-name {
-  flex: 1 1 auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  word-break: break-word;
-}
-.alt-action {
-  flex: 0 0 auto;
-  margin-left: 8px;
-}
-.small-btn {
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 13px;
-}
-
