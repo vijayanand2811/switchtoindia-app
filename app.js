@@ -88,14 +88,28 @@ function searchAndShow(q) {
     try {
       var ql = (q||'').toString().toLowerCase().trim();
       var results = all.filter(function(item){
-        var name = fieldToString(item.ProductName || item.ProductID || '').toLowerCase();
-        var brand = fieldToString(item.Brand || '').toLowerCase();
-        var alt1 = fieldToString(item.Alternative1 || '').toLowerCase();
-        var alt2 = fieldToString(item.Alternative2 || '').toLowerCase();
-        var alt3 = fieldToString(item.Alternative3 || '').toLowerCase();
-        if (!ql) return true;
-        return name.indexOf(ql) !== -1 || brand.indexOf(ql) !== -1 || alt1.indexOf(ql) !== -1 || alt2.indexOf(ql) !== -1 || alt3.indexOf(ql) !== -1;
-      });
+  var name = fieldToString(item.ProductName || item.ProductID || '').toLowerCase();
+  var brand = fieldToString(item.Brand || '').toLowerCase();
+  var alt1 = fieldToString(item.Alternative1 || '').toLowerCase();
+  var alt2 = fieldToString(item.Alternative2 || '').toLowerCase();
+  var alt3 = fieldToString(item.Alternative3 || '').toLowerCase();
+  var category = fieldToString(item.Category || '').toLowerCase();
+  var subcat = fieldToString(item.Subcategory || '').toLowerCase();
+  var attrs = fieldToString(item.Attributes || '').toLowerCase();
+
+  if (!ql) return true;
+  return (
+    name.indexOf(ql) !== -1 ||
+    brand.indexOf(ql) !== -1 ||
+    alt1.indexOf(ql) !== -1 ||
+    alt2.indexOf(ql) !== -1 ||
+    alt3.indexOf(ql) !== -1 ||
+    category.indexOf(ql) !== -1 ||
+    subcat.indexOf(ql) !== -1 ||
+    attrs.indexOf(ql) !== -1
+  );
+});
+
       renderResults(results);
     } catch (err) {
       console.error('searchAndShow error', err);
