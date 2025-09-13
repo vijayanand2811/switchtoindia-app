@@ -23,6 +23,18 @@ function showToast(msg){
   } catch(e){ console.warn('showToast failed', e); }
 }
 
+/* safe conversion of Airtable fields to string for comparisons */
+function fieldToString(v){
+  if (v == null) return '';
+  if (Array.isArray(v)) return v.map(x => typeof x === 'string' ? x : (x && x.name ? x.name : String(x))).join(', ');
+  if (typeof v === 'object') {
+    // Airtable sometimes returns objects for linked records or select options
+    if (v.name) return String(v.name);
+    return JSON.stringify(v);
+  }
+  return String(v);
+}
+
 /* -------- Data fetch -------- */
 let _productsCache = null;
 async function fetchProductsOnce(){
@@ -36,7 +48,6 @@ async function fetchProductsOnce(){
       }
       const json = await res.json();
       const records = json && json.records ? json.records : (Array.isArray(json) ? json : []);
-      // Normalize to array of plain objects (fields if present)
       _productsCache = records.map(r => r && r.fields ? r.fields : r || {});
       return _productsCache;
     } catch (e) {
@@ -60,11 +71,11 @@ async function searchAndShow(q) {
     const all = await fetchProductsOnce();
     const ql = (q||'').toString().toLowerCase().trim();
     const results = all.filter(item => {
-      const name = (item.ProductName||item.ProductID||'').toString().toLowerCase();
-      const brand = (item.Brand||'').toString().toLowerCase();
-      const alt1 = (item.Alternative1||'').toString().toLowerCase();
-      const alt2 = (item.Alternative2||'').toString().toLowerCase();
-      const alt3 = (item.Alternative3||'').toString().toLowerCase();
+      const name = fieldToString(item.ProductName || item.ProductID || '').toLowerCase();
+      const brand = fieldToString(item.Brand || '').toLowerCase();
+      const alt1 = fieldToString(item.Alternative1 || '').toLowerCase();
+      const alt2 = fieldToString(item.Alternative2 || '').toLowerCase();
+      const alt3 = fieldToString(item.Alternative3 || '').toLowerCase();
       if (!ql) return true;
       return name.includes(ql) || brand.includes(ql) || alt1.includes(ql) || alt2.includes(ql) || alt3.includes(ql);
     });
@@ -77,10 +88,9 @@ async function searchAndShow(q) {
 
 /* -------- Alternative selection (scoring) -------- */
 function pickAltObjects(item, rawAltNames) {
-  const normalize = s => (s||'').toString().trim();
+  const normalize = s => fieldToString(s).trim();
   const nLower = s => normalize(s).toLowerCase();
 
-  // build a product lookup map if not already
   if (!window._prodMap) {
     window._prodMap = {};
     const list = (_productsCache || []);
@@ -96,10 +106,10 @@ function pickAltObjects(item, rawAltNames) {
 
   const itemCat = nLower(item.Category || '');
   const itemSub = nLower(item.Subcategory || '');
-  const itemAttrs = (item.Attributes || '').toLowerCase();
+  const itemAttrs = nLower(item.Attributes || '');
 
   const isFssaiTrue = rec => {
-    const v = rec && rec.FSSAI_Licensed;
+    const v = rec && (rec.FSSAI_Licensed ?? rec.FSSAI || rec.FSSAI_Licensed === true);
     if (v === true || v === false) return !!v;
     if (typeof v === 'string') return ['yes','y','true','1'].includes((v+'').trim().toLowerCase());
     return Boolean(v);
@@ -108,21 +118,17 @@ function pickAltObjects(item, rawAltNames) {
   const candidates = (rawAltNames||[]).map(n => {
     if (!n) return null;
     const key = nLower(n);
-    // try direct lookup
     if (window._prodMap[key]) return window._prodMap[key];
-    // try fallback substring
-    const fallback = (_productsCache||[]).find(p => (p.ProductName||'').toLowerCase().includes(key));
+    const fallback = (_productsCache||[]).find(p => (fieldToString(p.ProductName)||'').toLowerCase().includes(key));
     if (fallback) return fallback;
-    // final fallback build minimal object (unverified)
     return { ProductName: String(n).trim(), ProductID:'', Brand:'', ParentCompany:'', ParentCountry:'', Category:'', Subcategory:'', Attributes:'', Ownership:'', FSSAI_Licensed:false };
   }).filter(Boolean);
 
-  // scoring
   const scored = candidates.map(alt => {
     const cat = nLower(alt.Category || '');
     const sub = nLower(alt.Subcategory || '');
-    const attrs = (alt.Attributes || '').toLowerCase();
-    const isIndian = ((alt.Ownership||'').toLowerCase().includes('india')) || ((alt.ParentCountry||'').toLowerCase().includes('india'));
+    const attrs = nLower(alt.Attributes || '');
+    const isIndian = ((fieldToString(alt.Ownership)||'').toLowerCase().includes('india')) || ((fieldToString(alt.ParentCountry)||'').toLowerCase().includes('india'));
     const fssai = isFssaiTrue(alt);
 
     let score = 0;
@@ -135,7 +141,7 @@ function pickAltObjects(item, rawAltNames) {
     }
     if (isIndian) score += 60;
     if (fssai) score += 20;
-    const altName = (alt.ProductName||'').toLowerCase();
+    const altName = (fieldToString(alt.ProductName)||'').toLowerCase();
     if (altName && rawAltNames.join(' ').toLowerCase().includes(altName)) score += 6;
     return { alt, score };
   });
@@ -160,17 +166,16 @@ function renderResults(results) {
   }
 
   results.forEach(item => {
-    const name = item.ProductName || item.ProductID || 'Unnamed product';
-    const brand = item.Brand || '';
-    const parent = item.ParentCompany || '';
-    const country = item.ParentCountry || '';
-    const imageUrl = item.ImageURL || '';
+    const name = fieldToString(item.ProductName || item.ProductID || 'Unnamed product');
+    const brand = fieldToString(item.Brand || '');
+    const parent = fieldToString(item.ParentCompany || '');
+    const country = fieldToString(item.ParentCountry || '');
+    const imageUrl = fieldToString(item.ImageURL || '');
 
-    // raw alternatives supplied in the row
     const rawAlts = [];
-    if (item.Alternative1) rawAlts.push(item.Alternative1);
-    if (item.Alternative2) rawAlts.push(item.Alternative2);
-    if (item.Alternative3) rawAlts.push(item.Alternative3);
+    if (item.Alternative1) rawAlts.push(fieldToString(item.Alternative1));
+    if (item.Alternative2) rawAlts.push(fieldToString(item.Alternative2));
+    if (item.Alternative3) rawAlts.push(fieldToString(item.Alternative3));
 
     const alts = pickAltObjects(item, rawAlts || []);
 
@@ -187,10 +192,10 @@ function renderResults(results) {
       altHtml += '<div style="margin-bottom:8px;font-weight:700;color:#333">Alternatives:</div>';
       alts.forEach(altObj => {
         if (!altObj) return;
-        const altName = altObj.ProductName || altObj.Brand || '';
-        const altCountry = altObj.ParentCountry || '';
+        const altName = fieldToString(altObj.ProductName || altObj.Brand || '');
+        const altCountry = fieldToString(altObj.ParentCountry || '');
         const safeA = escapeJS(altName);
-        const isAltIndian = (altObj.Ownership||'').toString().toLowerCase().includes('india') || (altCountry||'').toString().toLowerCase().includes('india');
+        const isAltIndian = (fieldToString(altObj.Ownership||'')).toLowerCase().includes('india') || (altCountry||'').toLowerCase().includes('india');
         const altBadge = isAltIndian ? '<span class="flag-badge indian" aria-label="Indian owned brand">Indian</span>' : '<span class="flag-badge foreign" aria-label="Foreign owned brand">Foreign</span>';
         altHtml += `
           <div class="alt-item" style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;">
@@ -200,7 +205,6 @@ function renderResults(results) {
       });
       altHtml += '</div>';
     } else {
-      // fallback to raw alt strings if no matched alt objects
       const raw = rawAlts || [];
       if (raw.length) {
         altHtml += '<div class="alt-list"><div style="font-weight:700;color:#333;margin-bottom:8px">Alternatives (unverified):</div>';
@@ -260,7 +264,6 @@ function addToBasket(name, country, price = null, qty = 1) {
   if (document.body.contains(document.getElementById('basketItems'))) loadBasket();
 }
 
-// update basket count badge
 function updateBasketCount() {
   try {
     const count = readBasket().reduce((s,i)=>s + (i.qty || 0), 0);
@@ -281,13 +284,11 @@ function updateBasketCount() {
   }
 }
 
-// quick-add from results (no price prompt)
 function addToBasketFromResult(name, country) {
   addToBasket(name, country, null, 1);
   showToast(`${name} added to basket. You can set price in Basket.`);
 }
 
-// quick-add alternative (assumed Indian in the DB)
 function addAlternativeToBasket(altName) {
   addToBasket(altName, 'India', null, 1);
   showToast(`${altName} added to basket. You can set price in Basket.`);
@@ -423,11 +424,10 @@ function renderImpact(basket) {
   });
 }
 
-/* -------- Clear basket & share helpers (exposed so inline buttons work) -------- */
 function clearBasket(){
   try {
     localStorage.removeItem(BASKET_KEY);
-    localStorage.removeItem('basket'); // legacy
+    localStorage.removeItem('basket');
     if (typeof loadBasket === 'function') loadBasket();
     if (typeof clearChart === 'function') clearChart();
     if (typeof updateBasketCount === 'function') updateBasketCount();
@@ -471,7 +471,6 @@ function shareScore(){
 /* -------- Init on load -------- */
 window.addEventListener('DOMContentLoaded', async function(){
   const initial = new URL(window.location.href).searchParams.get('q') || '';
-  // If results page present and there's a query, populate and search
   if (initial && document.body.contains(document.getElementById('resultsList'))) {
     const sb = document.getElementById('searchBox');
     const sbh = document.getElementById('searchBoxHero');
@@ -479,11 +478,9 @@ window.addEventListener('DOMContentLoaded', async function(){
     if (sbh) sbh.value = initial;
     await searchAndShow(initial);
   }
-  // load basket if basket area exists
   if (document.body.contains(document.getElementById('basketItems'))) {
     loadBasket();
   }
-  // update header badge
   updateBasketCount();
 });
 
@@ -491,9 +488,8 @@ window.addEventListener('DOMContentLoaded', async function(){
 function showOnboardingTooltipOnce() {
   try {
     if (localStorage.getItem('seen_badge_tooltip_v1')) return;
-    if (document.getElementById('switchtoindia-tooltip-overlay')) return; // already present
+    if (document.getElementById('switchtoindia-tooltip-overlay')) return;
 
-    // inject CSS for tooltip if missing
     if (!document.querySelector('style[data-switchtoindia-tooltip]')) {
       const s = document.createElement('style');
       s.setAttribute('data-switchtoindia-tooltip','1');
@@ -509,14 +505,12 @@ function showOnboardingTooltipOnce() {
       document.head.appendChild(s);
     }
 
-    // show only on home or results pages
     const isHomeSelector = !!document.querySelector('.hero');
     const isResultsSelector = !!document.getElementById('resultsList') || !!document.querySelector('.result-row');
     const isHomePath = location.pathname === '/' || location.pathname.toLowerCase().endsWith('/index.html');
     const shouldShow = isHomeSelector || isHomePath || isResultsSelector;
     if (!shouldShow) return;
 
-    // small delay so page content is stable
     setTimeout(() => {
       if (localStorage.getItem('seen_badge_tooltip_v1')) return;
       const overlay = document.createElement('div');
@@ -539,7 +533,6 @@ function showOnboardingTooltipOnce() {
         try { overlay.remove(); } catch(e){}
         localStorage.setItem('seen_badge_tooltip_v1', 'yes');
       });
-      // also close on overlay click (outside box)
       overlay.addEventListener('click', (ev) => {
         if (ev.target === overlay) {
           try { overlay.remove(); } catch(e){}
@@ -553,7 +546,7 @@ function showOnboardingTooltipOnce() {
 }
 window.addEventListener('DOMContentLoaded', showOnboardingTooltipOnce);
 
-/* expose functions to window for inline onclick handlers */
+/* expose functions */
 window.fetchProductsOnce = fetchProductsOnce;
 window.searchAndShow = searchAndShow;
 window.renderResults = renderResults;
