@@ -78,7 +78,7 @@ function fetchProductsOnce(){
   });
 }
 
-/* -------- Search + render pipeline -------- */
+/* -------- Search + render pipeline (improved: whole-word matching + applied to alternatives) -------- */
 function searchAndShow(q) {
   var container = document.getElementById('resultsList');
   if (!container) return;
@@ -87,28 +87,64 @@ function searchAndShow(q) {
   fetchProductsOnce().then(function(all){
     try {
       var ql = (q||'').toString().toLowerCase().trim();
-      var results = all.filter(function(item){
-  var name = fieldToString(item.ProductName || item.ProductID || '').toLowerCase();
-  var brand = fieldToString(item.Brand || '').toLowerCase();
-  var alt1 = fieldToString(item.Alternative1 || '').toLowerCase();
-  var alt2 = fieldToString(item.Alternative2 || '').toLowerCase();
-  var alt3 = fieldToString(item.Alternative3 || '').toLowerCase();
-  var category = fieldToString(item.Category || '').toLowerCase();
-  var subcat = fieldToString(item.Subcategory || '').toLowerCase();
-  var attrs = fieldToString(item.Attributes || '').toLowerCase();
 
-  if (!ql) return true;
-  return (
-    name.indexOf(ql) !== -1 ||
-    brand.indexOf(ql) !== -1 ||
-    alt1.indexOf(ql) !== -1 ||
-    alt2.indexOf(ql) !== -1 ||
-    alt3.indexOf(ql) !== -1 ||
-    category.indexOf(ql) !== -1 ||
-    subcat.indexOf(ql) !== -1 ||
-    attrs.indexOf(ql) !== -1
-  );
-});
+      function escapeRegExpForSearch(s){
+        return (s || '').toString().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      }
+
+      // helper: get searchable strings for a record
+      function fieldsToSearch(item) {
+        return {
+          name: fieldToString(item.ProductName || item.ProductID || '').toLowerCase(),
+          brand: fieldToString(item.Brand || '').toLowerCase(),
+          alt1: fieldToString(item.Alternative1 || '').toLowerCase(),
+          alt2: fieldToString(item.Alternative2 || '').toLowerCase(),
+          alt3: fieldToString(item.Alternative3 || '').toLowerCase(),
+          category: fieldToString(item.Category || '').toLowerCase(),
+          subcat: fieldToString(item.Subcategory || '').toLowerCase(),
+          attrs: (typeof item.Attributes === 'string' ? item.Attributes : (item.Attributes || '')).toString().toLowerCase()
+        };
+      }
+
+      var results = all.filter(function(item){
+        var f = fieldsToSearch(item);
+
+        if (!ql) return true;
+
+        var tokens = ql.split(/\s+/).filter(Boolean);
+        if (tokens.length === 0) return true;
+
+        // For each token, check across all searchable fields. If any token matches (whole-word / substring rules), accept the record.
+        return tokens.some(function(t){
+          var esc = escapeRegExpForSearch(t);
+          if (t.length <= 2) {
+            // short tokens: allow substring across all fields
+            return (
+              f.name.indexOf(t) !== -1 ||
+              f.brand.indexOf(t) !== -1 ||
+              f.alt1.indexOf(t) !== -1 ||
+              f.alt2.indexOf(t) !== -1 ||
+              f.alt3.indexOf(t) !== -1 ||
+              f.category.indexOf(t) !== -1 ||
+              f.subcat.indexOf(t) !== -1 ||
+              f.attrs.indexOf(t) !== -1
+            );
+          } else {
+            // longer token: whole-word match across all fields
+            var re = new RegExp('\\b' + esc + '\\b', 'i');
+            return (
+              re.test(f.name) ||
+              re.test(f.brand) ||
+              re.test(f.alt1) ||
+              re.test(f.alt2) ||
+              re.test(f.alt3) ||
+              re.test(f.category) ||
+              re.test(f.subcat) ||
+              re.test(f.attrs)
+            );
+          }
+        });
+      });
 
       renderResults(results);
     } catch (err) {
@@ -120,6 +156,7 @@ function searchAndShow(q) {
     container.innerHTML = '<div class="small">Error loading data. See console.</div>';
   });
 }
+
 
 /* -------- Alternative selection (scoring) -------- */
 function pickAltObjects(item, rawAltNames) {
