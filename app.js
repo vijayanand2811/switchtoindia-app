@@ -1,7 +1,5 @@
 /* app.js — SwitchToIndia full client JS
-   - Fetches products via /.netlify/functions/getProducts by default
-   - Provides search, renderResults, basket grouping + qty + price, pie chart
-   - Lightweight, defensive, and exports functions to window for inline handlers
+   Single-file replacement. Paste over your current app.js.
 */
 
 /* -------- Configuration -------- */
@@ -11,7 +9,7 @@ const BASKET_KEY = 'stindiabasket_v1';
 
 /* -------- Utilities -------- */
 function escapeHtml(s){ return (s+'').replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
-function escapeJS(s){ return (s+'').replace(/'/g,"\\'").replace(/"/g,'\\"'); }
+function escapeJS(s){ return (s+'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"'); }
 function showToast(msg){
   try {
     const t = document.createElement('div');
@@ -21,7 +19,7 @@ function showToast(msg){
     t.style.borderRadius='10px'; t.style.boxShadow='0 6px 18px rgba(0,0,0,0.18)';
     t.style.zIndex=99999;
     document.body.appendChild(t);
-    setTimeout(()=>t.remove(),2000);
+    setTimeout(()=>{ try{ t.remove(); }catch(e){} },2000);
   } catch(e){ console.warn('showToast failed', e); }
 }
 
@@ -29,7 +27,6 @@ function showToast(msg){
 let _productsCache = null;
 async function fetchProductsOnce(){
   if (_productsCache) return _productsCache;
-
   if (USE_NETLIFY_FUNCTION) {
     try {
       const res = await fetch(NETLIFY_FUNCTION_ENDPOINT);
@@ -38,18 +35,16 @@ async function fetchProductsOnce(){
         throw new Error(`Function returned ${res.status}: ${txt}`);
       }
       const json = await res.json();
-      // accept either {records:[{fields:{...}}]} or simple array
-      const records = json.records ? json.records : (Array.isArray(json) ? json : []);
-      _productsCache = records.map(r => r.fields ? r.fields : r);
+      const records = json && json.records ? json.records : (Array.isArray(json) ? json : []);
+      // Normalize to array of plain objects (fields if present)
+      _productsCache = records.map(r => r && r.fields ? r.fields : r || {});
       return _productsCache;
     } catch (e) {
       console.error('Netlify function fetch failed:', e);
-      // fallback to empty list
       _productsCache = [];
       return _productsCache;
     }
   } else {
-    // If you ever enable direct Airtable fetch, implement here.
     _productsCache = [];
     return _productsCache;
   }
@@ -80,13 +75,12 @@ async function searchAndShow(q) {
   }
 }
 
-// place before renderResults or inside it where alternatives are built
-// ----- REPLACE the old pickAltObjects() with this version -----
+/* -------- Alternative selection (scoring) -------- */
 function pickAltObjects(item, rawAltNames) {
   const normalize = s => (s||'').toString().trim();
   const nLower = s => normalize(s).toLowerCase();
 
-  // build product map once (by ProductName and ProductID and Brand)
+  // build a product lookup map if not already
   if (!window._prodMap) {
     window._prodMap = {};
     const list = (_productsCache || []);
@@ -96,78 +90,61 @@ function pickAltObjects(item, rawAltNames) {
       const brand = nLower(p.Brand || '');
       if (name) window._prodMap[name] = p;
       if (id) window._prodMap[id] = p;
-      // allow lookup by brand+name too (brand as fallback key)
       if (brand && name) window._prodMap[`${brand}:::${name}`] = p;
     });
   }
 
-  // Normalize item metadata
   const itemCat = nLower(item.Category || '');
   const itemSub = nLower(item.Subcategory || '');
   const itemAttrs = (item.Attributes || '').toLowerCase();
 
-  // Helper: canonicalize FSSAI flag
-  const isFssai = (rec) => {
+  const isFssaiTrue = rec => {
     const v = rec && rec.FSSAI_Licensed;
     if (v === true || v === false) return !!v;
-    if (typeof v === 'string') {
-      return ['yes','y','true','1'].includes(v.trim().toLowerCase());
-    }
+    if (typeof v === 'string') return ['yes','y','true','1'].includes((v+'').trim().toLowerCase());
     return Boolean(v);
   };
 
-  // Turn rawAltNames into candidate objects (try lookup, else create simple object)
-  const candidates = (rawAltNames || []).map(n => {
+  const candidates = (rawAltNames||[]).map(n => {
     if (!n) return null;
     const key = nLower(n);
-    // try direct name/id lookup
-    const found = window._prodMap[key];
-    if (found) return found;
-    // try brand:name combos if value contains brand separator (rare)
-    const byBrandName = window._prodMap[key];
-    if (byBrandName) return byBrandName;
-    // fallback: try to find by substring match in ProductName (cheap scan)
+    // try direct lookup
+    if (window._prodMap[key]) return window._prodMap[key];
+    // try fallback substring
     const fallback = (_productsCache||[]).find(p => (p.ProductName||'').toLowerCase().includes(key));
     if (fallback) return fallback;
-    // final fallback: return a minimal object with only ProductName set so UI can still show a label
-    return { ProductName: String(n).trim(), ProductID: '', Brand: '', ParentCompany: '', ParentCountry: '', Category:'', Subcategory:'', Attributes:'', Ownership:'', FSSAI_Licensed:false };
+    // final fallback build minimal object (unverified)
+    return { ProductName: String(n).trim(), ProductID:'', Brand:'', ParentCompany:'', ParentCountry:'', Category:'', Subcategory:'', Attributes:'', Ownership:'', FSSAI_Licensed:false };
   }).filter(Boolean);
 
-  // Score candidates
+  // scoring
   const scored = candidates.map(alt => {
     const cat = nLower(alt.Category || '');
     const sub = nLower(alt.Subcategory || '');
     const attrs = (alt.Attributes || '').toLowerCase();
-    const isIndian = ( (alt.Ownership||'').toLowerCase().includes('india') || (alt.ParentCountry||'').toLowerCase().includes('india') );
-    const fssai = isFssai(alt);
+    const isIndian = ((alt.Ownership||'').toLowerCase().includes('india')) || ((alt.ParentCountry||'').toLowerCase().includes('india'));
+    const fssai = isFssaiTrue(alt);
 
     let score = 0;
-    // prefer same subcategory strongly
     if (sub && itemSub && sub === itemSub) score += 300;
-    // same category helps
     if (cat && itemCat && cat === itemCat) score += 80;
-    // attribute overlap small boost
     if (itemAttrs && attrs) {
       const as = itemAttrs.split(',').map(x=>x.trim()).filter(Boolean);
       const bs = attrs.split(',').map(x=>x.trim()).filter(Boolean);
       if (as.length && bs.length && as.some(x=>bs.includes(x))) score += 30;
     }
-    // prefer Indian-owned
     if (isIndian) score += 60;
-    // prefer FSSAI licensed
     if (fssai) score += 20;
-    // minor boost if brand matches words in original alt string
     const altName = (alt.ProductName||'').toLowerCase();
     if (altName && rawAltNames.join(' ').toLowerCase().includes(altName)) score += 6;
     return { alt, score };
   });
 
-  // sort and return top 3 alternatives (but ensure deterministic fallback order)
   scored.sort((a,b) => b.score - a.score);
   return scored.map(s => s.alt).slice(0,3);
 }
 
-/* renderResults: displays product card + stacked alternatives */
+/* -------- renderResults: displays product + alternatives -------- */
 function renderResults(results) {
   const container = document.getElementById('resultsList');
   const no = document.getElementById('noResults');
@@ -189,14 +166,13 @@ function renderResults(results) {
     const country = item.ParentCountry || '';
     const imageUrl = item.ImageURL || '';
 
+    // raw alternatives supplied in the row
     const rawAlts = [];
-if (item.Alternative1) rawAlts.push(item.Alternative1);
-if (item.Alternative2) rawAlts.push(item.Alternative2);
-if (item.Alternative3) rawAlts.push(item.Alternative3);
+    if (item.Alternative1) rawAlts.push(item.Alternative1);
+    if (item.Alternative2) rawAlts.push(item.Alternative2);
+    if (item.Alternative3) rawAlts.push(item.Alternative3);
 
-// use pickAltObjects to select the best matches
-const alts = pickAltObjects(item, rawAlts);
-
+    const alts = pickAltObjects(item, rawAlts || []);
 
     const isIndianParent = (country||'').toString().toLowerCase().includes('india');
     const badgeHtml = isIndianParent
@@ -205,42 +181,39 @@ const alts = pickAltObjects(item, rawAlts);
 
     const imgHtml = imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(name)}" class="product-thumb">` : '';
 
-        let altHtml = '';
+    let altHtml = '';
     if (alts && alts.length) {
+      altHtml += '<div class="alt-list">';
+      altHtml += '<div style="margin-bottom:8px;font-weight:700;color:#333">Alternatives:</div>';
       alts.forEach(altObj => {
         if (!altObj) return;
         const altName = altObj.ProductName || altObj.Brand || '';
         const altCountry = altObj.ParentCountry || '';
         const safeA = escapeJS(altName);
-        const isIndian = (altObj.Ownership || '').toLowerCase().includes('india') ||
-                         (altCountry || '').toLowerCase().includes('india');
-        const badge = isIndian
-          ? '<span class="flag-badge indian" aria-label="Indian owned brand">Indian</span>'
-          : '<span class="flag-badge foreign" aria-label="Foreign owned brand">Foreign</span>';
-
+        const isAltIndian = (altObj.Ownership||'').toString().toLowerCase().includes('india') || (altCountry||'').toString().toLowerCase().includes('india');
+        const altBadge = isAltIndian ? '<span class="flag-badge indian" aria-label="Indian owned brand">Indian</span>' : '<span class="flag-badge foreign" aria-label="Foreign owned brand">Foreign</span>';
         altHtml += `
-          <div class="alt-item">
-            <div class="alt-name">${escapeHtml(altName)} ${badge}</div>
-            <div class="alt-action">
-              <button class="btn btn-ghost small-btn" onclick="addAlternativeToBasket('${safeA}')">Switch / Add</button>
-            </div>
+          <div class="alt-item" style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;">
+            <div class="alt-name">${escapeHtml(altName)} ${altBadge}</div>
+            <div class="alt-action"><button class="btn btn-ghost small-btn" onclick="addAlternativeToBasket('${safeA}')">Switch / Add</button></div>
           </div>`;
       });
+      altHtml += '</div>';
     } else {
-      // fallback: show raw alt names (if provided in item fields)
-      const rawAlts = [item.Alternative1, item.Alternative2, item.Alternative3].filter(Boolean);
-      if (rawAlts.length) {
+      // fallback to raw alt strings if no matched alt objects
+      const raw = rawAlts || [];
+      if (raw.length) {
         altHtml += '<div class="alt-list"><div style="font-weight:700;color:#333;margin-bottom:8px">Alternatives (unverified):</div>';
-        rawAlts.forEach(a => {
+        raw.forEach(a => {
           const safeA = escapeJS(a);
-          altHtml += `<div class="alt-item"><div class="alt-name">${escapeHtml(a)} <span class="flag-badge foreign" aria-label="Unverified">Unverified</span></div>
-            <div class="alt-action"><button class="btn btn-ghost small-btn" onclick="addAlternativeToBasket('${safeA}')">Add</button></div></div>`;
+          altHtml += `<div class="alt-item" style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;">
+            <div class="alt-name">${escapeHtml(a)} <span class="flag-badge foreign" aria-label="Unverified">Unverified</span></div>
+            <div class="alt-action"><button class="btn btn-ghost small-btn" onclick="addAlternativeToBasket('${safeA}')">Add</button></div>
+          </div>`;
         });
         altHtml += '</div>';
       }
     }
-);
-
 
     const safeName = escapeJS(name);
     const safeCountry = escapeJS(country);
@@ -268,13 +241,11 @@ const alts = pickAltObjects(item, rawAlts);
 }
 
 /* -------- Basket helpers (grouped, qty, price) -------- */
-
 function readBasket(){
   try { return JSON.parse(localStorage.getItem(BASKET_KEY) || '[]'); } catch(e){ console.error(e); return []; }
 }
 function writeBasket(arr){ localStorage.setItem(BASKET_KEY, JSON.stringify(arr)); localStorage.setItem('basket', JSON.stringify(arr)); if (typeof updateBasketCount === 'function') updateBasketCount(); }
 
-/* addToBasket: name, country, price (number|null), qty */
 function addToBasket(name, country, price = null, qty = 1) {
   const key = `${(name||'').trim()}|${(country||'').trim()}`;
   const cur = readBasket();
@@ -289,13 +260,12 @@ function addToBasket(name, country, price = null, qty = 1) {
   if (document.body.contains(document.getElementById('basketItems'))) loadBasket();
 }
 
-// --- update basket count badge in header ---
+// update basket count badge
 function updateBasketCount() {
   try {
     const count = readBasket().reduce((s,i)=>s + (i.qty || 0), 0);
     const el = document.getElementById('basketCount');
     if (!el) return;
-    // trigger pop animation only when count increases
     const prev = Number(el.innerText || 0);
     el.innerText = String(count);
     if (count > 0) {
@@ -311,20 +281,18 @@ function updateBasketCount() {
   }
 }
 
-/* Add from results — quick add (no price prompt). Price can be edited in basket. */
+// quick-add from results (no price prompt)
 function addToBasketFromResult(name, country) {
-  // Add item immediately without asking for price
   addToBasket(name, country, null, 1);
   showToast(`${name} added to basket. You can set price in Basket.`);
 }
 
-/* Add alternative (assume Indian) — quick add without price prompt */
+// quick-add alternative (assumed Indian in the DB)
 function addAlternativeToBasket(altName) {
   addToBasket(altName, 'India', null, 1);
   showToast(`${altName} added to basket. You can set price in Basket.`);
 }
 
-/* loadBasket: render grouped view with qty, edit, remove */
 let chartInstance = null;
 function loadBasket() {
   const basketItemsDiv = document.getElementById('basketItems');
@@ -371,7 +339,6 @@ function loadBasket() {
   renderImpact(basket);
 }
 
-/* updateQuantity */
 function updateQuantity(index, delta) {
   const cur = readBasket();
   if (!cur[index]) return;
@@ -386,7 +353,6 @@ function updateQuantity(index, delta) {
   showToast('Basket updated');
 }
 
-/* editPrice */
 function editPrice(index) {
   const cur = readBasket();
   if (!cur[index]) return;
@@ -404,7 +370,6 @@ function editPrice(index) {
   showToast('Price updated');
 }
 
-/* removeItem */
 function removeItem(index) {
   const cur = readBasket();
   if (!cur[index]) return;
@@ -416,16 +381,14 @@ function removeItem(index) {
   showToast('Item removed');
 }
 
-/* clearChart (if used elsewhere) */
 function clearChart() {
-  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+  if (chartInstance) { try{ chartInstance.destroy(); }catch(e){} chartInstance = null; }
   const ctx = document.getElementById('pieChart')?.getContext('2d');
   if (ctx) ctx.clearRect(0,0,220,220);
   const impactTextEl = document.getElementById('impactText');
   if (impactTextEl) impactTextEl.innerText = '';
 }
 
-/* renderImpact (counts + monetary totals) */
 function renderImpact(basket) {
   const indianCount = basket.filter(i => (i.country||'').toLowerCase().includes('india')).reduce((s,i)=>s+(i.qty||0),0);
   const foreignCount = basket.reduce((s,i)=>s+(i.qty||0),0) - indianCount;
@@ -449,7 +412,7 @@ function renderImpact(basket) {
 
   const ctx = document.getElementById('pieChart')?.getContext('2d');
   if (!ctx) return;
-  if (chartInstance) chartInstance.destroy();
+  if (chartInstance) try{ chartInstance.destroy(); }catch(e){}
   chartInstance = new Chart(ctx, {
     type: 'pie',
     data: {
@@ -460,38 +423,83 @@ function renderImpact(basket) {
   });
 }
 
-/* -------- Init on load (populate search box if query param present) -------- */
-window.addEventListener('DOMContentLoaded', function(){
-  // wire up initial search param on results page
+/* -------- Clear basket & share helpers (exposed so inline buttons work) -------- */
+function clearBasket(){
+  try {
+    localStorage.removeItem(BASKET_KEY);
+    localStorage.removeItem('basket'); // legacy
+    if (typeof loadBasket === 'function') loadBasket();
+    if (typeof clearChart === 'function') clearChart();
+    if (typeof updateBasketCount === 'function') updateBasketCount();
+    showToast('Basket cleared');
+  } catch (e) {
+    console.error('clearBasket error', e);
+    alert('Could not clear basket — see console for details.');
+  }
+}
+
+function shareScore(){
+  const stats = (document.getElementById('impactText') || {}).innerText || '';
+  const origin = window.location.origin || 'https://switchtoindia.in';
+  const url = origin + '/';
+  const prefix = 'My Indian score from SwitchToIndia:';
+  const message = stats ? `${prefix} ${stats} — Try it: ${url}` : `Check your SwitchToIndia score: ${url}`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'My Indian Score — SwitchToIndia', text: message, url })
+      .catch(err => {
+        console.info('navigator.share failed or cancelled:', err);
+        tryCopy();
+      });
+  } else {
+    tryCopy();
+  }
+
+  function tryCopy(){
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(message).then(() => {
+        alert('Score copied to clipboard — paste it in any chat to share!');
+      }).catch(() => {
+        prompt('Copy and share this message:', message);
+      });
+    } else {
+      prompt('Copy and share this message:', message);
+    }
+  }
+}
+
+/* -------- Init on load -------- */
+window.addEventListener('DOMContentLoaded', async function(){
   const initial = new URL(window.location.href).searchParams.get('q') || '';
+  // If results page present and there's a query, populate and search
   if (initial && document.body.contains(document.getElementById('resultsList'))) {
     const sb = document.getElementById('searchBox');
     const sbh = document.getElementById('searchBoxHero');
     if (sb) sb.value = initial;
     if (sbh) sbh.value = initial;
-    searchAndShow(initial);
+    await searchAndShow(initial);
   }
-  // load basket if present
+  // load basket if basket area exists
   if (document.body.contains(document.getElementById('basketItems'))) {
     loadBasket();
   }
-  // ensure header badge shows current count on load
-  if (typeof updateBasketCount === 'function') updateBasketCount();
-
+  // update header badge
+  updateBasketCount();
 });
-
 
 /* --- Onboarding tooltip (robust) --- */
 function showOnboardingTooltipOnce() {
   try {
     if (localStorage.getItem('seen_badge_tooltip_v1')) return;
-    // ensure CSS present (inject if missing)
+    if (document.getElementById('switchtoindia-tooltip-overlay')) return; // already present
+
+    // inject CSS for tooltip if missing
     if (!document.querySelector('style[data-switchtoindia-tooltip]')) {
       const s = document.createElement('style');
       s.setAttribute('data-switchtoindia-tooltip','1');
       s.innerText = `
-        .tooltip-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:9999}
-        .tooltip-box{background:#fff;border-radius:12px;padding:20px;max-width:360px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,0.25)}
+        .tooltip-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.45);display:flex;justify-content:center;align-items:center;z-index:99999}
+        .tooltip-box{background:#fff;border-radius:12px;padding:20px;max-width:360px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.25)}
         .tooltip-box h3{margin-top:0;margin-bottom:10px}
         .tooltip-badges{display:flex;justify-content:center;gap:12px;margin:12px 0}
         .flag-badge.indian{background:#138808;color:#fff;padding:6px 10px;border-radius:6px}
@@ -501,44 +509,49 @@ function showOnboardingTooltipOnce() {
       document.head.appendChild(s);
     }
 
-    // wait one paint + small timeout so home content is available
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        const isHomeSelector = !!document.querySelector('.hero');
-        const isResultsSelector = !!document.getElementById('resultsList')
-                                  || !!document.querySelector('.results-grid')
-                                  || !!document.querySelector('.results')
-                                  || !!document.querySelector('.result-row')
-                                  || location.pathname.toLowerCase().includes('results');
-        const isHomePath = location.pathname === '/' || location.pathname.toLowerCase().endsWith('/index.html');
-        const shouldShow = isHomeSelector || isHomePath || isResultsSelector;
-        if (!shouldShow) return;
-        const overlay = document.createElement('div');
-        overlay.className = 'tooltip-overlay';
-        overlay.innerHTML = `
-          <div class="tooltip-box" role="dialog" aria-labelledby="tooltipTitle" aria-describedby="tooltipDesc">
-            <h3 id="tooltipTitle">Understand the Badges</h3>
-            <p id="tooltipDesc">Badges help you see brand ownership at a glance:</p>
-            <div class="tooltip-badges">
-              <span class="flag-badge indian" aria-label="Indian owned brand">Indian</span>
-              <span class="flag-badge foreign" aria-label="Foreign owned brand">Foreign</span>
-            </div>
-            <p class="small">Switch to Indian alternatives to support local businesses.</p>
-            <button class="btn btn-primary" id="tooltipClose">Got it</button>
-          </div>`;
-        document.body.appendChild(overlay);
-        document.getElementById('tooltipClose').addEventListener('click', () => {
-          overlay.remove();
+    // show only on home or results pages
+    const isHomeSelector = !!document.querySelector('.hero');
+    const isResultsSelector = !!document.getElementById('resultsList') || !!document.querySelector('.result-row');
+    const isHomePath = location.pathname === '/' || location.pathname.toLowerCase().endsWith('/index.html');
+    const shouldShow = isHomeSelector || isHomePath || isResultsSelector;
+    if (!shouldShow) return;
+
+    // small delay so page content is stable
+    setTimeout(() => {
+      if (localStorage.getItem('seen_badge_tooltip_v1')) return;
+      const overlay = document.createElement('div');
+      overlay.id = 'switchtoindia-tooltip-overlay';
+      overlay.className = 'tooltip-overlay';
+      overlay.innerHTML = `
+        <div class="tooltip-box" role="dialog" aria-labelledby="tooltipTitle" aria-describedby="tooltipDesc">
+          <h3 id="tooltipTitle">Understand the Badges</h3>
+          <p id="tooltipDesc">Badges show ownership at a glance:</p>
+          <div class="tooltip-badges">
+            <span class="flag-badge indian" aria-label="Indian owned brand">Indian</span>
+            <span class="flag-badge foreign" aria-label="Foreign owned brand">Foreign</span>
+          </div>
+          <p class="small">Use Switch To India to discover local alternatives.</p>
+          <div style="margin-top:12px"><button class="btn btn-primary" id="tooltipClose">Got it</button></div>
+        </div>`;
+      document.body.appendChild(overlay);
+      const closeBtn = document.getElementById('tooltipClose');
+      closeBtn && closeBtn.addEventListener('click', () => {
+        try { overlay.remove(); } catch(e){}
+        localStorage.setItem('seen_badge_tooltip_v1', 'yes');
+      });
+      // also close on overlay click (outside box)
+      overlay.addEventListener('click', (ev) => {
+        if (ev.target === overlay) {
+          try { overlay.remove(); } catch(e){}
           localStorage.setItem('seen_badge_tooltip_v1', 'yes');
-        });
-      }, 200);
-    });
+        }
+      });
+    }, 220);
   } catch (e) {
     console.error('showOnboardingTooltipOnce error', e);
   }
 }
 window.addEventListener('DOMContentLoaded', showOnboardingTooltipOnce);
-
 
 /* expose functions to window for inline onclick handlers */
 window.fetchProductsOnce = fetchProductsOnce;
@@ -553,3 +566,6 @@ window.editPrice = editPrice;
 window.removeItem = removeItem;
 window.clearChart = clearChart;
 window.showToast = showToast;
+window.updateBasketCount = updateBasketCount;
+window.clearBasket = clearBasket;
+window.shareScore = shareScore;
