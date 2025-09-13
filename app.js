@@ -81,39 +81,91 @@ async function searchAndShow(q) {
 }
 
 // place before renderResults or inside it where alternatives are built
+// ----- REPLACE the old pickAltObjects() with this version -----
 function pickAltObjects(item, rawAltNames) {
-  const normalize = s => (s||'').toString().toLowerCase().trim();
-  const itemCat = normalize(item.Category);
-  const itemSub = normalize(item.Subcategory);
-  // build map once
-  window._prodMap = window._prodMap || (_productsCache||[]).reduce((m,p)=>{
-    m[(p.ProductName||'').toString().toLowerCase()] = p; return m;
-  }, {});
-  const candidates = rawAltNames.map(n => window._prodMap[normalize(n)]).filter(Boolean);
-  const scored = candidates.map(alt => {
-    const cat = normalize(alt.Category);
-    const sub = normalize(alt.Subcategory);
-    const isIndian = (alt.Ownership||'').toString().toLowerCase().includes('india') || (alt.ParentCountry||'').toString().toLowerCase().includes('india');
-    const fssai = !!alt.FSSAI_Licensed;
-    let score = 0;
-    if (cat && itemCat && cat===itemCat) score += 50;
-    if (sub && itemSub && sub===itemSub) score += 200;
-    // attribute overlap small boost (if Attributes present)
-    const a = (item.Attributes||'').toLowerCase();
-    const b = (alt.Attributes||'').toLowerCase();
-    if (a && b) {
-      const as = a.split(',').map(x=>x.trim());
-      const bs = b.split(',').map(x=>x.trim());
-      if (as.some(x=>bs.includes(x))) score += 25;
-    }
-    if (isIndian) score += 30;
-    if (fssai) score += 10;
-    return {alt, score};
-  });
-  scored.sort((x,y)=>y.score - x.score);
-  return scored.map(s=>s.alt).slice(0,3);
-}
+  const normalize = s => (s||'').toString().trim();
+  const nLower = s => normalize(s).toLowerCase();
 
+  // build product map once (by ProductName and ProductID and Brand)
+  if (!window._prodMap) {
+    window._prodMap = {};
+    const list = (_productsCache || []);
+    list.forEach(p => {
+      const name = nLower(p.ProductName || '');
+      const id = nLower(p.ProductID || '');
+      const brand = nLower(p.Brand || '');
+      if (name) window._prodMap[name] = p;
+      if (id) window._prodMap[id] = p;
+      // allow lookup by brand+name too (brand as fallback key)
+      if (brand && name) window._prodMap[`${brand}:::${name}`] = p;
+    });
+  }
+
+  // Normalize item metadata
+  const itemCat = nLower(item.Category || '');
+  const itemSub = nLower(item.Subcategory || '');
+  const itemAttrs = (item.Attributes || '').toLowerCase();
+
+  // Helper: canonicalize FSSAI flag
+  const isFssai = (rec) => {
+    const v = rec && rec.FSSAI_Licensed;
+    if (v === true || v === false) return !!v;
+    if (typeof v === 'string') {
+      return ['yes','y','true','1'].includes(v.trim().toLowerCase());
+    }
+    return Boolean(v);
+  };
+
+  // Turn rawAltNames into candidate objects (try lookup, else create simple object)
+  const candidates = (rawAltNames || []).map(n => {
+    if (!n) return null;
+    const key = nLower(n);
+    // try direct name/id lookup
+    const found = window._prodMap[key];
+    if (found) return found;
+    // try brand:name combos if value contains brand separator (rare)
+    const byBrandName = window._prodMap[key];
+    if (byBrandName) return byBrandName;
+    // fallback: try to find by substring match in ProductName (cheap scan)
+    const fallback = (_productsCache||[]).find(p => (p.ProductName||'').toLowerCase().includes(key));
+    if (fallback) return fallback;
+    // final fallback: return a minimal object with only ProductName set so UI can still show a label
+    return { ProductName: String(n).trim(), ProductID: '', Brand: '', ParentCompany: '', ParentCountry: '', Category:'', Subcategory:'', Attributes:'', Ownership:'', FSSAI_Licensed:false };
+  }).filter(Boolean);
+
+  // Score candidates
+  const scored = candidates.map(alt => {
+    const cat = nLower(alt.Category || '');
+    const sub = nLower(alt.Subcategory || '');
+    const attrs = (alt.Attributes || '').toLowerCase();
+    const isIndian = ( (alt.Ownership||'').toLowerCase().includes('india') || (alt.ParentCountry||'').toLowerCase().includes('india') );
+    const fssai = isFssai(alt);
+
+    let score = 0;
+    // prefer same subcategory strongly
+    if (sub && itemSub && sub === itemSub) score += 300;
+    // same category helps
+    if (cat && itemCat && cat === itemCat) score += 80;
+    // attribute overlap small boost
+    if (itemAttrs && attrs) {
+      const as = itemAttrs.split(',').map(x=>x.trim()).filter(Boolean);
+      const bs = attrs.split(',').map(x=>x.trim()).filter(Boolean);
+      if (as.length && bs.length && as.some(x=>bs.includes(x))) score += 30;
+    }
+    // prefer Indian-owned
+    if (isIndian) score += 60;
+    // prefer FSSAI licensed
+    if (fssai) score += 20;
+    // minor boost if brand matches words in original alt string
+    const altName = (alt.ProductName||'').toLowerCase();
+    if (altName && rawAltNames.join(' ').toLowerCase().includes(altName)) score += 6;
+    return { alt, score };
+  });
+
+  // sort and return top 3 alternatives (but ensure deterministic fallback order)
+  scored.sort((a,b) => b.score - a.score);
+  return scored.map(s => s.alt).slice(0,3);
+}
 
 /* renderResults: displays product card + stacked alternatives */
 function renderResults(results) {
@@ -153,27 +205,41 @@ const alts = pickAltObjects(item, rawAlts);
 
     const imgHtml = imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(name)}" class="product-thumb">` : '';
 
-    let altHtml = '';
-    alts.forEach(altObj => {
-  if (!altObj) return;
-  const altName = altObj.ProductName || '';
-  const altCountry = altObj.ParentCountry || '';
-  const safeA = escapeJS(altName);
+        let altHtml = '';
+    if (alts && alts.length) {
+      alts.forEach(altObj => {
+        if (!altObj) return;
+        const altName = altObj.ProductName || altObj.Brand || '';
+        const altCountry = altObj.ParentCountry || '';
+        const safeA = escapeJS(altName);
+        const isIndian = (altObj.Ownership || '').toLowerCase().includes('india') ||
+                         (altCountry || '').toLowerCase().includes('india');
+        const badge = isIndian
+          ? '<span class="flag-badge indian" aria-label="Indian owned brand">Indian</span>'
+          : '<span class="flag-badge foreign" aria-label="Foreign owned brand">Foreign</span>';
 
-  const isIndian = (altObj.Ownership || '').toLowerCase().includes('india') ||
-                   (altCountry || '').toLowerCase().includes('india');
-  const badge = isIndian
-    ? '<span class="flag-badge indian" aria-label="Indian owned brand">Indian</span>'
-    : '<span class="flag-badge foreign" aria-label="Foreign owned brand">Foreign</span>';
-
-  altHtml += `
-    <div class="alt-item">
-      <div class="alt-name">${escapeHtml(altName)} ${badge}</div>
-      <div class="alt-action">
-        <button class="btn btn-ghost small-btn" onclick="addAlternativeToBasket('${safeA}')">Switch / Add</button>
-      </div>
-    </div>`;
-});
+        altHtml += `
+          <div class="alt-item">
+            <div class="alt-name">${escapeHtml(altName)} ${badge}</div>
+            <div class="alt-action">
+              <button class="btn btn-ghost small-btn" onclick="addAlternativeToBasket('${safeA}')">Switch / Add</button>
+            </div>
+          </div>`;
+      });
+    } else {
+      // fallback: show raw alt names (if provided in item fields)
+      const rawAlts = [item.Alternative1, item.Alternative2, item.Alternative3].filter(Boolean);
+      if (rawAlts.length) {
+        altHtml += '<div class="alt-list"><div style="font-weight:700;color:#333;margin-bottom:8px">Alternatives (unverified):</div>';
+        rawAlts.forEach(a => {
+          const safeA = escapeJS(a);
+          altHtml += `<div class="alt-item"><div class="alt-name">${escapeHtml(a)} <span class="flag-badge foreign" aria-label="Unverified">Unverified</span></div>
+            <div class="alt-action"><button class="btn btn-ghost small-btn" onclick="addAlternativeToBasket('${safeA}')">Add</button></div></div>`;
+        });
+        altHtml += '</div>';
+      }
+    }
+);
 
 
     const safeName = escapeJS(name);
