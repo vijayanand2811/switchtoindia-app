@@ -227,3 +227,99 @@ footer{margin:30px 0;padding:18px 0;border-top:1px solid #f0eee9;color:var(--mut
   .wrap { padding-left:24px; padding-right:24px; }
   .alt-item .alt-action button { min-width:110px; }
 }
+
+/* ===== Result row / actions alignment =====
+   Add this at the end of style.css so buttons align
+   for both main product (Add) and alternatives (Switch).
+*/
+
+/* Make the result row a 2-column layout (info + actions) */
+.result-row {
+  display: flex;
+  flex-direction: row;
+  gap: 18px;
+  align-items: flex-start;
+  padding: 14px;
+}
+
+/* Left column: product info — allow shrinking on small widths */
+.result-row .result-info {
+  flex: 1 1 auto;
+  min-width: 0; /* important for text truncation/wrapping */
+}
+
+/* Right column: actions — fixed width so buttons align vertically */
+.result-row .result-actions {
+  flex: 0 0 110px; /* button column width on desktop */
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+/* Ensure Add button fills the action column nicely */
+.result-row .result-actions .add-btn {
+  width: 100%;
+  max-width: 110px;
+  box-sizing: border-box;
+}
+
+/* Alternatives: keep same two-column look inside alt-list items */
+.alt-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+/* Left part of alt-item (info) grows, right part holds action button */
+.alt-item .alt-info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.alt-item .alt-actions {
+  flex: 0 0 110px; /* same width as result-actions */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* Make the Switch/Add buttons equal width and visually consistent */
+.alt-item .alt-actions .btn,
+.alt-item .alt-actions .btn.btn-ghost,
+.result-row .result-actions .btn {
+  width: 100%;
+  max-width: 110px;
+  box-sizing: border-box;
+}
+
+/* Small screens: stack into a single column (mobile friendly) */
+@media (max-width: 760px) {
+  .result-row {
+    display: block;
+    padding: 12px;
+  }
+  .result-row .result-actions {
+    margin-top: 8px;
+    flex: none;
+    width: auto;
+    justify-content: flex-start;
+  }
+  .alt-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+  .alt-item .alt-actions {
+    margin-left: 8px;
+    flex: 0 0 auto;
+    width: auto;
+  }
+  /* keep mobile button sizes readable */
+  .alt-item .alt-actions .btn,
+  .result-row .result-actions .btn {
+    min-width: 82px;
+    width: auto;
+  }
+}
