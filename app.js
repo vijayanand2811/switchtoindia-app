@@ -303,7 +303,7 @@ function renderResults(results) {
     html += `  <div class="result-actions">`;
     const safeName = escapeJS(name);
     const safeCountry = escapeJS(country);
-    html += `    <button class="btn btn-ghost small-btn" onclick="addToBasketFromResult('${safeName}', '${safeCountry}')">Add</button>`;
+    html += `    <button class="btn btn-ghost small-btn add-btn" onclick="addToBasketFromResult('${safeName}', '${safeCountry}')">Add</button>`;
     html += `  </div>`; // end result-actions
 
     html += `  <div style="width:100%;margin-top:12px">`;
