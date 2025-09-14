@@ -337,7 +337,7 @@ function renderResults(results) {
 
         // alt actions column (Switch/Add)
         html += `  <div class="alt-actions">`;
-        html += `    <button class="btn btn-ghost small-btn" onclick="addAlternativeToBasket('${safeAltNameJS}', '${escapeJS(altCountry || 'India')}')">Switch / Add</button>`;
+        html += `    <button class="btn btn-ghost small-btn" onclick="addAlternativeToBasket('${safeAltNameJS}', '${escapeJS(altCountry || 'India')}')">Switch</button>`;
         html += `  </div>`;
 
         html += `</div>`; // end alt-item
