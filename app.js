@@ -232,7 +232,7 @@ function pickAltObjects(item, rawAltNames) {
   return scored.map(function(s){ return s.alt; }).slice(0,3);
 }
 
-/* -------- renderResults: displays product + alternatives -------- */
+/* renderResults: displays product card + stacked alternatives (NEW) */
 function renderResults(results) {
   const container = document.getElementById('resultsList');
   const no = document.getElementById('noResults');
@@ -247,6 +247,12 @@ function renderResults(results) {
     no.style.display = 'none';
   }
 
+  // ensure product map exists for pickAltObjects etc.
+  window._prodMap = window._prodMap || (_productsCache || []).reduce((m, p) => {
+    if (p && (p.ProductName || p.ProductID)) m[(p.ProductName || p.ProductID).toString().toLowerCase()] = p;
+    return m;
+  }, {});
+
   results.forEach(item => {
     const name = item.ProductName || item.ProductID || 'Unnamed product';
     const brand = item.Brand || '';
@@ -254,87 +260,95 @@ function renderResults(results) {
     const country = item.ParentCountry || '';
     const imageUrl = item.ImageURL || '';
 
-    // collect alt names
+    // gather raw alternative names
     const rawAlts = [];
     if (item.Alternative1) rawAlts.push(item.Alternative1);
     if (item.Alternative2) rawAlts.push(item.Alternative2);
     if (item.Alternative3) rawAlts.push(item.Alternative3);
 
-    const alts = pickAltObjects(item, rawAlts);
+    // pick best matching alternative objects (uses your existing pickAltObjects)
+    const altObjs = (typeof pickAltObjects === 'function') ? pickAltObjects(item, rawAlts) : rawAlts.map(n => ({ ProductName: n, ParentCountry: 'India', ParentCompany: '', Brand: n }));
 
-    // badge for main product
-    const isIndianParent = (country || '').toLowerCase().includes('india') ||
-                           (item.Ownership || '').toLowerCase().includes('india');
+    // product badge
+    const isIndianParent = (country || '').toString().toLowerCase().includes('india');
     const badgeHtml = isIndianParent
       ? '<span class="flag-badge indian" aria-label="Indian owned brand">Indian</span>'
       : '<span class="flag-badge foreign" aria-label="Foreign owned brand">Foreign</span>';
 
-    const imgHtml = imageUrl
-      ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(name)}" class="product-thumb">`
-      : '';
+    const imgHtml = imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(name)}" class="product-thumb">` : '';
 
-    // category + subcategory
-    const catText = item.Category ? `Category: ${escapeHtml(item.Category)}` : '';
-    const subText = item.Subcategory ? ` — ${escapeHtml(item.Subcategory)}` : '';
-
-    // build alternatives
-    let altHtml = '';
-    if (alts && alts.length) {
-      altHtml += '<div class="alt-list">';
-      altHtml += '<div style="margin-bottom:8px;font-weight:700;color:#333">Alternatives:</div>';
-      alts.forEach(altObj => {
-        if (!altObj) return;
-        const altName = altObj.ProductName || altObj.ProductID || '';
-        const altCountry = altObj.ParentCountry || '';
-        const safeA = escapeJS(altName);
-
-        const isAltIndian = ((altObj.Ownership || altObj.ParentCountry || '') + '')
-                              .toLowerCase().includes('india') || !!altObj.FSSAI_Licensed;
-
-        const altBadge = isAltIndian
-          ? '<span class="flag-badge indian" aria-label="Indian owned brand">Indian</span>'
-          : '<span class="flag-badge foreign" aria-label="Foreign owned brand">Foreign</span>';
-
-        altHtml += `
-          <div class="alt-item">
-            <div class="alt-name">
-              <div style="font-weight:600;">${escapeHtml(altName)}</div>
-              <div>${altBadge}</div>
-            </div>
-            <div class="alt-action">
-              <button class="btn btn-ghost small-btn" onclick="addAlternativeToBasket('${safeA}')">Switch / Add</button>
-            </div>
-          </div>`;
-      });
-      altHtml += '</div>';
+    // build HTML for main product block
+    let html = '';
+    html += `<div class="result-row card" style="margin-bottom:12px;">`;
+    html += `  <div class="result-info">`;
+    html += `    <div style="display:flex;align-items:center;gap:12px;">`;
+    if (imgHtml) html += imgHtml;
+    html += `      <div style="flex:1;min-width:0">`;
+    html += `        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">`;
+    html += `          <h3 style="margin:0;">${escapeHtml(name)}</h3>`;
+    html += `          ${badgeHtml}`;
+    html += `        </div>`;
+    html += `        <div class="small" style="margin-top:8px;"><strong>Brand:</strong> ${escapeHtml(brand)} &nbsp; <strong>Parent:</strong> ${escapeHtml(parent)} — ${escapeHtml(country)}</div>`;
+    // show category/subcategory if present
+    if (item.Category || item.Subcategory) {
+      html += `    <div class="small" style="margin-top:6px;"><strong>Category:</strong> ${escapeHtml(item.Category || '')}`;
+      if (item.Subcategory) html += ` — ${escapeHtml(item.Subcategory)}`;
+      html += `</div>`;
     }
+    html += `      </div>`;
+    html += `    </div>`; // end product top row
+    html += `  </div>`; // end result-info
 
+    // actions (Add button) - right aligned column
+    html += `  <div class="result-actions">`;
     const safeName = escapeJS(name);
     const safeCountry = escapeJS(country);
+    html += `    <button class="btn btn-ghost small-btn" onclick="addToBasketFromResult('${safeName}', '${safeCountry}')">Add</button>`;
+    html += `  </div>`; // end result-actions
 
-    const html = `
-      <div class="result-row card" style="margin-bottom:12px;">
-        <div class="result-left">
-          <div style="display:flex;align-items:center;gap:12px;">
-            ${imgHtml}
-            <div style="flex:1">
-              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-                <h3 style="margin:0;">${escapeHtml(name)}</h3>
-                ${badgeHtml}
-                <button class="btn btn-ghost small-btn" style="margin-left:6px;"
-                  onclick="addToBasketFromResult('${safeName}', '${safeCountry}')">Add</button>
-              </div>
-              <div class="product-meta">
-                <strong>Brand:</strong> ${escapeHtml(brand)} &nbsp;
-                <strong>Parent:</strong> ${escapeHtml(parent)} — ${escapeHtml(country)}
-                ${catText ? '<br/>' + catText + subText : ''}
-              </div>
-            </div>
-          </div>
-          ${altHtml}
-        </div>
-      </div>
-    `;
+    html += `  <div style="width:100%;margin-top:12px">`;
+    // Alternatives header & list
+    if (altObjs && altObjs.length) {
+      html += `<div class="alt-list">`;
+      html += `<div style="margin-bottom:8px;font-weight:700;color:#333">Alternatives:</div>`;
+
+      // for each alternative, render using the same layout (alt-item)
+      altObjs.forEach(altObj => {
+        if (!altObj) return;
+        const altName = altObj.ProductName || altObj.ProductID || '';
+        const altBrand = altObj.Brand || '';
+        const altParent = altObj.ParentCompany || '';
+        const altCountry = altObj.ParentCountry || altObj.Country || '';
+        const isAltIndian = (altObj.Ownership || '').toString().toLowerCase().includes('india') || (altCountry || '').toString().toLowerCase().includes('india');
+        const altBadge = isAltIndian ? '<span class="flag-badge indian">Indian</span>' : '<span class="flag-badge foreign">Foreign</span>';
+        const safeAltNameJS = escapeJS(altName);
+        html += `<div class="alt-item card" style="padding:10px;margin-bottom:8px;">`;
+        html += `  <div class="alt-info">`;
+        html += `    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">`;
+        html += `      <div style="flex:1;min-width:0"><strong>${escapeHtml(altName)}</strong> ${altBadge}</div>`;
+        html += `    </div>`;
+        html += `    <div class="small" style="margin-top:6px;"><strong>Brand:</strong> ${escapeHtml(altBrand)} &nbsp; <strong>Parent:</strong> ${escapeHtml(altParent)} — ${escapeHtml(altCountry)}</div>`;
+        if (altObj.Category || altObj.Subcategory) {
+          html += `<div class="small" style="margin-top:6px;"><strong>Category:</strong> ${escapeHtml(altObj.Category || '')}`;
+          if (altObj.Subcategory) html += ` — ${escapeHtml(altObj.Subcategory)}`;
+          html += `</div>`;
+        }
+        html += `  </div>`; // end alt-info
+
+        // alt actions column (Switch/Add)
+        html += `  <div class="alt-actions">`;
+        html += `    <button class="btn btn-ghost small-btn" onclick="addAlternativeToBasket('${safeAltNameJS}', '${escapeJS(altCountry || 'India')}')">Switch / Add</button>`;
+        html += `  </div>`;
+
+        html += `</div>`; // end alt-item
+      });
+
+      html += `</div>`; // end alt-list
+    }
+    html += `  </div>`; // end alternatives wrapper
+
+    html += `</div>`; // end result-row
+
     container.insertAdjacentHTML('beforeend', html);
   });
 }
@@ -384,9 +398,11 @@ function addToBasketFromResult(name, country) {
   addToBasket(name, country, null, 1);
   showToast(name + ' added to basket. You can set price in Basket.');
 }
-function addAlternativeToBasket(altName) {
-  addToBasket(altName, 'India', null, 1);
-  showToast(altName + ' added to basket. You can set price in Basket.');
+/* Add alternative to basket; accepts name and optional country */
+function addAlternativeToBasket(altName, altCountry) {
+  const country = altCountry || 'India';
+  addToBasket(altName, country, null, 1);
+  showToast(`${altName} added to basket. You can set price in Basket.`);
 }
 
 /* Basket rendering */
