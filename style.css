@@ -62,10 +62,30 @@ nav a{color:var(--muted);text-decoration:none;margin-left:14px;font-size:14px}
 .example .left{flex:1}
 .flag-badge{font-size:12px;padding:6px 10px;border-radius:999px;background:#f2f2f2;color:#333;display:inline-block}
 
-/* Impact pie */
-.impact{display:flex;gap:14px;align-items:center;padding:12px;border-radius:12px;background:linear-gradient(180deg,#fff,#fff);box-shadow:0 10px 20px rgba(12,12,12,0.03)}
-.pie{width:110px;height:110px;border-radius:999px;background:conic-gradient(var(--green) 0 62%, var(--saffron) 62% 100%);display:grid;place-items:center;color:#fff;font-weight:700}
-.impact .meta{font-size:14px;color:var(--muted)}
+/* Pie chart sizing container */
+.pie-card {
+  width: 100%;
+  max-width: 420px;   /* max width on desktop */
+  margin: 0 auto 18px;
+  padding: 18px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 20px rgba(12,12,12,0.03);
+  box-sizing: border-box;
+}
+
+/* ensure canvas fills the card but not exceed it */
+.pie-card canvas#pieChart {
+  width: 100% !important;
+  height: 320px !important;  /* fixed visual height for desktop */
+  display: block;
+}
+
+/* smaller on mobile */
+@media (max-width: 760px) {
+  .pie-card { max-width: 340px; padding: 12px; }
+  .pie-card canvas#pieChart { height: 260px !important; }
+}
 
 /* ---------- Results / products ---------- */
 /* base result row (card wrapper) */
