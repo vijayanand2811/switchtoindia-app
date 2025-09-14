@@ -11,7 +11,7 @@
   --shadow-2: 0 10px 30px rgba(12,12,12,0.04);
 }
 
-/* Reset / base */
+/* === Reset / base === */
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
@@ -29,7 +29,7 @@ body{
   padding:20px;
 }
 
-/* Header */
+/* === Header === */
 header{display:flex;align-items:center;justify-content:space-between;padding:6px 0}
 .logo{display:flex;align-items:center;gap:12px}
 .logo .badge{
@@ -40,7 +40,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:6px
 .logo h1{font-size:20px;margin:0;font-weight:700}
 nav a{color:var(--muted);text-decoration:none;margin-left:14px;font-size:14px}
 
-/* Hero */
+/* === Hero === */
 .hero{
   background:linear-gradient(90deg, rgba(255,160,80,0.06), rgba(19,136,8,0.02));
   border-radius:var(--radius);
@@ -54,7 +54,7 @@ nav a{color:var(--muted);text-decoration:none;margin-left:14px;font-size:14px}
 .hero p{margin:0;color:var(--muted);font-size:15px}
 .cta-row{display:flex;gap:12px;flex-wrap:wrap}
 
-/* Buttons */
+/* === Buttons === */
 .btn{
   padding:11px 16px;border-radius:10px;border:0;font-weight:600;cursor:pointer;
   background:transparent;color:inherit;
@@ -63,34 +63,65 @@ nav a{color:var(--muted);text-decoration:none;margin-left:14px;font-size:14px}
 .btn-ghost{background:transparent;border:1px solid #eee;color:var(--muted)}
 .small-btn{padding:8px 12px;font-size:13px;border-radius:8px}
 
-/* Search */
-.search{display:flex;gap:8px;align-items:center}
-.search input{flex:1;padding:12px;border-radius:10px;border:1px solid #eee;font-size:15px}
+/* === Search === */
+/* ensure search controls align nicely on desktop and stack on small screens */
+.search{display:flex;gap:12px;align-items:center}
+.search input{flex:1;padding:12px;border-radius:10px;border:1px solid #eee;font-size:15px;min-width:0}
 
-/* Cards / Grid */
+/* keep search buttons same height as input by default */
+.search .btn, .search .btn-ghost { padding:10px 16px; height:auto; white-space:nowrap }
+
+/* === Cards / Grid === */
 .grid{display:grid;grid-template-columns:repeat(1,1fr);gap:12px;margin-top:12px}
 @media(min-width:760px){ .grid{grid-template-columns:repeat(3,1fr)} .hero h2{font-size:28px} }
 .card{background:var(--card);padding:14px;border-radius:12px;box-shadow:var(--shadow-2)}
 .card h4{margin:0 0 8px 0;font-size:16px}
 .card p{margin:0;color:var(--muted);font-size:14px}
 
-/* Example / impact */
+/* === Example / impact === */
 .example{margin:18px 0}
 .example .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .example .left{flex:1}
 .flag-badge{font-size:12px;padding:6px 10px;border-radius:999px;background:#f2f2f2;color:#333;display:inline-block}
 
-/* Impact pie */
+/* === Impact pie === */
 .impact{display:flex;gap:14px;align-items:center;padding:12px;border-radius:12px;background:linear-gradient(180deg,#fff,#fff);box-shadow:0 10px 20px rgba(12,12,12,0.03)}
 .pie{width:110px;height:110px;border-radius:999px;background:conic-gradient(var(--green) 0 62%, var(--saffron) 62% 100%);display:grid;place-items:center;color:#fff;font-weight:700}
 .impact .meta{font-size:14px;color:var(--muted)}
 
-/* Results / product list */
-.result-row{margin-bottom:12px}
-.result-left{display:block}
-.result-left img.product-thumb{width:64px;height:64px;border-radius:8px;object-fit:cover}
+/* === Results / product list === */
+/* Use a two-column layout: left = info, right = actions (Add button) */
+.result-row{
+  margin-bottom:12px;
+  display:flex;
+  gap:18px;
+  align-items:flex-start;
+  padding:12px;
+  border-radius:12px;
+  background:var(--card);
+  box-shadow:var(--shadow-2);
+}
 
-/* Alternatives list */
+/* left block holds product info and alternatives (grows) */
+.result-info{flex:1;min-width:0}
+.result-info img.product-thumb{width:64px;height:64px;border-radius:8px;object-fit:cover;flex:0 0 64px}
+
+/* right column for main product actions (Add) */
+.result-actions{
+  flex:0 0 110px;
+  display:flex;
+  justify-content:flex-end;
+  align-items:flex-start;
+}
+
+/* ensure Add button doesn't wrap oddly */
+.result-actions .btn{white-space:nowrap}
+
+/* Inline header details under product name */
+.result-info h3{margin:0;font-size:18px}
+.result-info .small{margin-top:6px;color:var(--muted);font-size:13px}
+
+/* === Alternatives list === */
 .alt-list{margin-top:12px}
 .alt-item{
   display:flex;
@@ -99,20 +130,21 @@ nav a{color:var(--muted);text-decoration:none;margin-left:14px;font-size:14px}
   gap:12px;
   padding:10px;border-radius:10px;background:#fff;border:1px solid #f0f0f0;margin-bottom:8px;
 }
-.alt-item .alt-name{font-weight:500;color:#222}
-.alt-action{flex:0 0 110px; text-align:right}
 
-/* Basket UI */
-.basket-row{margin-bottom:8px}
+/* inside each alternative we split into info and actions */
+.alt-item .alt-info{flex:1;min-width:0}
+.alt-item .alt-info strong{display:block}
+.alt-item .alt-info .small{margin-top:6px;font-size:13px;color:var(--muted)}
+.alt-item .alt-actions{flex:0 0 110px; text-align:right; display:flex; align-items:center; justify-content:flex-end}
 
-/* Badges (Indian / Foreign) */
+/* badge styles */
 .flag-badge.indian{background:var(--green);color:#fff;padding:6px 10px;border-radius:999px;display:inline-block}
 .flag-badge.foreign{background:#d9534f;color:#fff;padding:6px 10px;border-radius:999px;display:inline-block}
 
-/* Small text helper */
+/* small helper text */
 .small{font-size:13px;color:var(--muted)}
 
-/* Header basket count */
+/* header basket count */
 .badge { position: relative; display:inline-block; }
 .basket-count {
   position: absolute;
@@ -121,20 +153,20 @@ nav a{color:var(--muted);text-decoration:none;margin-left:14px;font-size:14px}
   box-shadow:0 4px 10px rgba(0,0,0,0.12);min-width:20px;text-align:center;pointer-events:none;display:none;
 }
 
-/* Tooltip (on-boarding) */
+/* tooltip */
 .tooltip-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:9999}
 .tooltip-box{background:#fff;border-radius:12px;padding:20px;max-width:360px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,0.25)}
 .tooltip-badges{display:flex;justify-content:center;gap:12px;margin:12px 0}
 
-/* Footer */
+/* footer */
 footer{margin:30px 0;padding:18px 0;border-top:1px solid #f0eee9;color:var(--muted);font-size:13px}
 
-/* Utility */
+/* utility */
 .hidden{display:none!important}
 
-/* ========== Responsive fixes ========== */
+/* ========== Responsive ========== */
 
-/* Avoid horizontal scroll & make hero behave on small screens */
+/* Narrow / mobile: stack columns, keep controls usable */
 @media (max-width: 760px) {
   .wrap { padding-left: 12px; padding-right: 12px; }
 
@@ -163,218 +195,28 @@ footer{margin:30px 0;padding:18px 0;border-top:1px solid #f0eee9;color:var(--mut
 
   html, body { overflow-x: hidden; }
 
-  /* Make result rows and alt-items friendlier on mobile */
-  .alt-item { flex-direction: row; align-items:center; gap:10px; }
-  .alt-item .alt-action { margin-left: 8px; }
-  .alt-item .alt-action button { width:auto; min-width:90px; font-size:13px; padding:6px 10px; }
+  /* make result rows stack vertically: info then actions */
+  .result-row{ display:block; padding:12px; }
+  .result-actions{ margin-top:12px; display:flex; justify-content:flex-end; width:100% }
+
+  /* alternatives: info left, actions right but stacked nicely */
+  .alt-item{ display:flex; align-items:center; gap:10px; }
+  .alt-item .alt-actions{ margin-left:12px; flex:0 0 auto }
+  .alt-item .alt-actions .btn{ min-width:90px; }
+
+  /* search buttons shouldn't rotate or break */
+  .search .btn, .search .btn-ghost { width:100%; box-sizing:border-box; }
 }
 
-/* Extra tiny phones */
+/* extra tiny phones */
 @media (max-width: 360px) {
   body.home .hero h2 { font-size: 17px !important; }
   .logo h1 { font-size:18px }
-  .alt-item .alt-action button { min-width:82px; padding:6px 8px; font-size:12px; }
+  .alt-item .alt-actions .btn { min-width:82px; padding:6px 8px; font-size:12px; }
 }
 
 /* Desktop spacing niceties */
 @media (min-width: 761px) {
   .wrap { padding-left:24px; padding-right:24px; }
   .alt-item .alt-action button { min-width:110px; }
-}
-
-
-
-
-/* ===== Base Reset ===== */
-* {
-  box-sizing: border-box;
-}
-
-body {
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  margin: 0;
-  padding: 0;
-  background: #fafafa;
-  color: #222;
-  line-height: 1.4;
-}
-
-/* ===== Layout ===== */
-.hero {
-  padding: 24px 16px;
-  text-align: center;
-  background: #fff7f2;
-  border-bottom: 1px solid #eee;
-}
-
-.hero h1 {
-  margin: 0 0 12px;
-  font-size: 22px;
-  font-weight: 600;
-}
-
-.hero .search {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  max-width: 480px;
-  margin: 0 auto;
-}
-
-.hero .search input {
-  flex: 1;
-  padding: 10px 14px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 16px;
-}
-
-.hero .btn {
-  padding: 10px 16px;
-  font-size: 16px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.btn-primary {
-  background: orange;
-  color: #fff;
-}
-
-.btn-ghost {
-  background: #f7f7f7;
-  color: #333;
-  border: 1px solid #ddd;
-}
-
-.small-btn {
-  font-size: 14px;
-  padding: 6px 12px;
-  border-radius: 6px;
-}
-
-/* ===== Results ===== */
-#resultsList {
-  padding: 16px;
-  max-width: 720px;
-  margin: 0 auto;
-}
-
-.card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 14px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-}
-
-/* Unified layout for product & alternatives */
-.result-row,
-.alt-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.result-info,
-.alt-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.result-actions,
-.alt-actions {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-}
-
-/* Titles */
-.result-row h3,
-.alt-item h4 {
-  margin: 0 0 6px;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.small {
-  font-size: 14px;
-  color: #555;
-  margin-top: 4px;
-}
-
-/* Badges */
-.flag-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-.flag-badge.indian {
-  background: #138808;
-  color: #fff;
-}
-
-.flag-badge.foreign {
-  background: #d9534f;
-  color: #fff;
-}
-
-/* Alternatives wrapper */
-.alt-list {
-  margin-top: 10px;
-  padding-left: 0;
-}
-
-/* ===== Basket & Misc ===== */
-.basket-row {
-  background: #fff;
-  border-radius: 10px;
-  margin-bottom: 10px;
-  padding: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-#impactText {
-  font-size: 14px;
-  color: #333;
-  margin-top: 12px;
-  text-align: center;
-}
-
-#pieChart {
-  max-width: 220px;
-  margin: 12px auto;
-  display: block;
-}
-
-/* ===== Responsive ===== */
-@media (max-width: 480px) {
-  .hero .search {
-    flex-direction: column;
-  }
-  .hero .btn {
-    width: 100%;
-  }
-  .result-row,
-  .alt-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .result-actions,
-  .alt-actions {
-    flex-direction: row;
-    justify-content: flex-start;
-    margin-top: 8px;
-  }
 }
