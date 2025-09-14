@@ -9,9 +9,10 @@
   --max-w:840px;
   --shadow-1: 0 6px 18px rgba(0,0,0,0.06);
   --shadow-2: 0 10px 30px rgba(12,12,12,0.04);
+  --action-col-w:110px; /* width for action columns (desktop) */
 }
 
-/* Reset / base */
+/* ---------- Reset / base ---------- */
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
@@ -23,59 +24,39 @@ body{
   -moz-osx-font-smoothing:grayscale;
   line-height:1.35;
 }
-.wrap{
-  max-width:var(--max-w);
-  margin:0 auto;
-  padding:20px;
-}
+.wrap{max-width:var(--max-w);margin:0 auto;padding:20px}
 
-/* Header */
+/* ---------- Header ---------- */
 header{display:flex;align-items:center;justify-content:space-between;padding:6px 0}
 .logo{display:flex;align-items:center;gap:12px}
-.logo .badge{
-  width:44px;height:44px;border-radius:50%;
-  background:linear-gradient(135deg,var(--saffron),#fff 50%,var(--green));
-  display:grid;place-items:center;box-shadow:var(--shadow-1);
-}
+.logo .badge{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--saffron),#fff 50%,var(--green));display:grid;place-items:center;box-shadow:var(--shadow-1)}
 .logo h1{font-size:20px;margin:0;font-weight:700}
 nav a{color:var(--muted);text-decoration:none;margin-left:14px;font-size:14px}
 
-/* Hero */
-.hero{
-  background:linear-gradient(90deg, rgba(255,160,80,0.06), rgba(19,136,8,0.02));
-  border-radius:var(--radius);
-  padding:22px;
-  margin:18px 0;
-  display:grid;
-  gap:14px;
-  box-shadow: var(--shadow-1);
-}
+/* ---------- Hero ---------- */
+.hero{background:linear-gradient(90deg, rgba(255,160,80,0.06), rgba(19,136,8,0.02));border-radius:var(--radius);padding:22px;margin:18px 0;display:grid;gap:14px;box-shadow:var(--shadow-1)}
 .hero h2{font-size:22px;margin:0}
 .hero p{margin:0;color:var(--muted);font-size:15px}
 .cta-row{display:flex;gap:12px;flex-wrap:wrap}
 
-/* Buttons */
-.btn{
-  padding:11px 16px;border-radius:10px;border:0;font-weight:600;cursor:pointer;
-  background:transparent;color:inherit;
-  display:inline-flex;align-items:center;justify-content:center;
-}
+/* ---------- Buttons ---------- */
+.btn{padding:11px 16px;border-radius:10px;border:0;font-weight:600;cursor:pointer;background:transparent;color:inherit;display:inline-flex;align-items:center;justify-content:center}
 .btn-primary{background:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(255,122,0,0.18)}
 .btn-ghost{background:transparent;border:1px solid #eee;color:var(--muted)}
 .small-btn{padding:8px 12px;font-size:13px;border-radius:8px}
 
-/* Search */
+/* ---------- Search ---------- */
 .search{display:flex;gap:8px;align-items:center}
 .search input{flex:1;padding:12px;border-radius:10px;border:1px solid #eee;font-size:15px;min-width:0}
 
-/* Cards / Grid */
+/* ---------- Grid / Cards ---------- */
 .grid{display:grid;grid-template-columns:repeat(1,1fr);gap:12px;margin-top:12px}
 @media(min-width:760px){ .grid{grid-template-columns:repeat(3,1fr)} .hero h2{font-size:28px} }
 .card{background:var(--card);padding:14px;border-radius:12px;box-shadow:var(--shadow-2)}
 .card h4{margin:0 0 8px 0;font-size:16px}
 .card p{margin:0;color:var(--muted);font-size:14px}
 
-/* Example / impact */
+/* ---------- Example / Impact ---------- */
 .example{margin:18px 0}
 .example .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .example .left{flex:1}
@@ -86,240 +67,111 @@ nav a{color:var(--muted);text-decoration:none;margin-left:14px;font-size:14px}
 .pie{width:110px;height:110px;border-radius:999px;background:conic-gradient(var(--green) 0 62%, var(--saffron) 62% 100%);display:grid;place-items:center;color:#fff;font-weight:700}
 .impact .meta{font-size:14px;color:var(--muted)}
 
-/* Results / product list */
-.result-row{margin-bottom:12px}
-.result-left{display:block}
-.result-left > .top {
+/* ---------- Results / products ---------- */
+/* base result row (card wrapper) */
+.result-row{
+  background:var(--card);
+  border-radius:12px;
+  box-shadow:var(--shadow-2);
+  margin-bottom:12px;
+  padding:14px;
   display:flex;
-  gap:12px;
+  gap:18px;
   align-items:flex-start;
 }
-/* image thumb */
-.result-left img.product-thumb{width:64px;height:64px;border-radius:8px;object-fit:cover}
 
-/* left column inside result (content + details) */
-.result-left .content {
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-/* title row inside content */
-.result-left .title-row{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  flex-wrap:wrap;
-}
-/* push the single 'Add' button to the far right in that title row */
-.result-left .title-row .btn-ghost.small-btn.add-btn {
-  margin-left: auto;
-}
+/* left/info column */
+.result-info{flex:1 1 auto;min-width:0}
+.result-info .top{display:flex;gap:12px;align-items:flex-start}
+.result-info img.product-thumb{width:64px;height:64px;border-radius:8px;object-fit:cover}
 
-/* Brand/parent/category block (left column details) */
-.result-left .meta-block{
-  color:var(--muted);
-  font-size:14px;
-  display:block;
-}
-.result-left .meta-block strong{font-weight:600}
+/* content inside left column */
+.result-info .content{display:flex;flex-direction:column;gap:8px}
+.result-info .title-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.result-info h3{margin:0}
+.result-info .meta-block{color:var(--muted);font-size:14px}
+.result-info .meta-block strong{font-weight:600}
 
-/* Alternatives list */
+/* right/actions column for main product (Add) */
+.result-actions{flex:0 0 var(--action-col-w);display:flex;align-items:flex-start;justify-content:flex-end}
+.result-actions .add-btn{width:100%;max-width:var(--action-col-w);box-sizing:border-box}
+
+/* ---------- Alternatives list ---------- */
 .alt-list{margin-top:12px}
 .alt-item{
   display:flex;
-  align-items:stretch;
-  justify-content:space-between;
+  align-items:flex-start;
   gap:12px;
-  padding:10px;border-radius:10px;background:#fff;border:1px solid #f0f0f0;margin-bottom:8px;
+  border-radius:10px;
+  background:#fff;
+  border:1px solid #f0f0f0;
+  padding:12px;
+  margin-bottom:8px;
+  box-sizing:border-box;
 }
-/* left area in alternative shows name + meta stacked */
-.alt-item .alt-left {
-  flex:1 1 auto;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-.alt-item .alt-name{font-weight:600;color:#222}
-.alt-item .alt-meta{font-size:13px;color:var(--muted);line-height:1.25}
-.alt-action{flex:0 0 120px; text-align:right; display:flex; align-items:center; justify-content:flex-end}
+/* left info in alt item */
+.alt-info{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:8px}
+.alt-name{font-weight:600;color:#222}
+.alt-meta{font-size:13px;color:var(--muted);line-height:1.25}
+/* right action for alternative */
+.alt-actions{flex:0 0 var(--action-col-w);display:flex;align-items:center;justify-content:flex-end}
+.alt-actions .btn{width:100%;max-width:var(--action-col-w);box-sizing:border-box}
 
-/* Basket UI */
-.basket-row{margin-bottom:8px}
-
-/* Badges (Indian / Foreign) */
+/* ---------- Badges / helpers ---------- */
 .flag-badge.indian{background:var(--green);color:#fff;padding:6px 10px;border-radius:999px;display:inline-block}
 .flag-badge.foreign{background:#d9534f;color:#fff;padding:6px 10px;border-radius:999px;display:inline-block}
-
-/* Small text helper */
 .small{font-size:13px;color:var(--muted)}
 
-/* Header basket count */
-.badge { position: relative; display:inline-block; }
-.basket-count {
-  position: absolute;
-  top:-6px; right:-8px;
-  background:#d9534f;color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;line-height:1;
-  box-shadow:0 4px 10px rgba(0,0,0,0.12);min-width:20px;text-align:center;pointer-events:none;display:none;
-}
+/* ---------- Header basket count ---------- */
+.badge{position:relative;display:inline-block}
+.basket-count{position:absolute;top:-6px;right:-8px;background:#d9534f;color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;line-height:1;box-shadow:0 4px 10px rgba(0,0,0,0.12);min-width:20px;text-align:center;pointer-events:none;display:none}
 
-/* Tooltip (on-boarding) */
+/* ---------- Tooltip ---------- */
 .tooltip-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:9999}
 .tooltip-box{background:#fff;border-radius:12px;padding:20px;max-width:360px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,0.25)}
 .tooltip-badges{display:flex;justify-content:center;gap:12px;margin:12px 0}
 
-/* Footer */
+/* ---------- Footer ---------- */
 footer{margin:30px 0;padding:18px 0;border-top:1px solid #f0eee9;color:var(--muted);font-size:13px}
 
-/* Utility */
+/* small utility */
 .hidden{display:none!important}
 
-/* ========== Responsive fixes ========== */
+/* ---------- Responsive / mobile friendly ---------- */
+@media (max-width:760px) {
+  .wrap{padding-left:12px;padding-right:12px}
+  .hero{padding:14px}
+  .hero h2{font-size:18px;line-height:1.08}
+  /* stack search controls */
+  body.home .search{display:flex;flex-direction:column;gap:10px;align-items:stretch}
+  body.home .search input, body.home .search .btn, body.home .search .btn-ghost{width:100%;min-width:0}
+  header{flex-wrap:wrap;gap:8px;align-items:center}
 
-/* Avoid horizontal scroll & make hero behave on small screens */
-@media (max-width: 760px) {
-  .wrap { padding-left: 12px; padding-right: 12px; }
+  /* results stack vertically: info then actions */
+  .result-row{display:block;padding:12px}
+  .result-info .top{flex-direction:row;align-items:flex-start;gap:12px}
+  .result-info .title-row{width:100%;align-items:center}
+  .result-actions{flex:none;width:auto;margin-top:8px;justify-content:flex-start}
+  .result-actions .add-btn{max-width:220px;width:auto}
 
-  body.home .hero,
-  .hero {
-    box-sizing: border-box !important;
-    max-width: 100% !important;
-    padding: 14px !important;
-    overflow: hidden !important;
-    word-break: break-word;
-  }
-  body.home .hero > * { max-width: 100% !important; }
-
-  body.home .hero h2 { font-size: 18px !important; line-height: 1.08 !important; white-space: normal !important; word-break: break-word; margin: 0 0 8px 0; }
-  body.home .hero p { font-size: 14px !important; margin:0; color: var(--muted); }
-
-  /* stack the search controls vertically on small screens */
-  body.home .search { display:flex !important; flex-direction:column !important; gap:10px !important; align-items:stretch !important; }
-  body.home .search input, body.home .search .btn, body.home .search .btn-ghost { max-width:100% !important; min-width:0 !important; width:100% !important; }
-
-  /* CTA row stacked */
-  body.home .cta-row { flex-direction: column; gap:8px; align-items:flex-start; }
-
-  /* header wrap so nav doesn't push content sideways */
-  header { flex-wrap: wrap; gap:8px; align-items:center; }
-
-  html, body { overflow-x: hidden; }
-
-  /* Make result rows and alt-items friendlier on mobile */
-  .result-left > .top { flex-direction:row; align-items:flex-start; gap:12px; }
-  .result-left img.product-thumb{width:56px;height:56px}
-  .result-left .title-row { width:100%; align-items:center; }
-  .result-left .title-row .btn-ghost.small-btn.add-btn { margin-left:auto; }
-  .alt-item { flex-direction:column; align-items:stretch; }
-  .alt-item .alt-action { align-self:flex-end; margin-top:8px; width:100%; display:flex; justify-content:flex-end; }
-  .alt-item .alt-action button { min-width:110px; }
+  /* alternatives become vertical with actions at bottom-right */
+  .alt-item{flex-direction:column;align-items:stretch}
+  .alt-actions{flex:none;width:auto;margin-top:8px;justify-content:flex-end;align-self:flex-end}
+  .alt-actions .btn{max-width:220px;width:auto}
+  .alt-info .alt-meta{font-size:13px}
+  .result-info img.product-thumb{width:56px;height:56px}
 }
 
 /* Extra tiny phones */
-@media (max-width: 360px) {
-  body.home .hero h2 { font-size: 17px !important; }
-  .logo h1 { font-size:18px }
-  .alt-item .alt-action button { min-width:82px; padding:6px 8px; font-size:12px; }
+@media (max-width:360px){
+  .hero h2{font-size:17px}
+  .logo h1{font-size:18px}
+  .alt-actions .btn,.result-actions .add-btn{min-width:82px;padding:6px 8px;font-size:12px}
 }
 
-/* Desktop spacing niceties */
-@media (min-width: 761px) {
-  .wrap { padding-left:24px; padding-right:24px; }
-  .alt-item .alt-action button { min-width:110px; }
-}
-
-/* ===== Result row / actions alignment =====
-   Add this at the end of style.css so buttons align
-   for both main product (Add) and alternatives (Switch).
-*/
-
-/* Make the result row a 2-column layout (info + actions) */
-.result-row {
-  display: flex;
-  flex-direction: row;
-  gap: 18px;
-  align-items: flex-start;
-  padding: 14px;
-}
-
-/* Left column: product info — allow shrinking on small widths */
-.result-row .result-info {
-  flex: 1 1 auto;
-  min-width: 0; /* important for text truncation/wrapping */
-}
-
-/* Right column: actions — fixed width so buttons align vertically */
-.result-row .result-actions {
-  flex: 0 0 110px; /* button column width on desktop */
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
-}
-
-/* Ensure Add button fills the action column nicely */
-.result-row .result-actions .add-btn {
-  width: 100%;
-  max-width: 110px;
-  box-sizing: border-box;
-}
-
-/* Alternatives: keep same two-column look inside alt-list items */
-.alt-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px;
-  box-sizing: border-box;
-}
-
-/* Left part of alt-item (info) grows, right part holds action button */
-.alt-item .alt-info {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.alt-item .alt-actions {
-  flex: 0 0 110px; /* same width as result-actions */
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-/* Make the Switch/Add buttons equal width and visually consistent */
-.alt-item .alt-actions .btn,
-.alt-item .alt-actions .btn.btn-ghost,
-.result-row .result-actions .btn {
-  width: 100%;
-  max-width: 110px;
-  box-sizing: border-box;
-}
-
-/* Small screens: stack into a single column (mobile friendly) */
-@media (max-width: 760px) {
-  .result-row {
-    display: block;
-    padding: 12px;
-  }
-  .result-row .result-actions {
-    margin-top: 8px;
-    flex: none;
-    width: auto;
-    justify-content: flex-start;
-  }
-  .alt-item {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-  }
-  .alt-item .alt-actions {
-    margin-left: 8px;
-    flex: 0 0 auto;
-    width: auto;
-  }
-  /* keep mobile button sizes readable */
-  .alt-item .alt-actions .btn,
-  .result-row .result-actions .btn {
-    min-width: 82px;
-    width: auto;
-  }
+/* Desktop niceties */
+@media (min-width:761px){
+  .wrap{padding-left:24px;padding-right:24px}
+  /* ensure action width is consistent */
+  .result-actions,.alt-actions{flex:0 0 var(--action-col-w)}
 }
